@@ -5,6 +5,7 @@ from PyQt5.uic import loadUi
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import segyio
+import numpy as np 
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None):
         fig = Figure()
