@@ -135,7 +135,7 @@
      <string>Gray</string>
     </property>
    </widget>
-   <widget class="QToolButton" name="toolButton_3">
+   <widget class="QToolButton" name="enhancedata">
     <property name="geometry">
      <rect>
       <x>440</x>
