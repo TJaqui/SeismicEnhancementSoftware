@@ -4,7 +4,9 @@ import numpy as np
 from sporco import array,plot,util
 from models.Attention_unet import AttU_Net
 from tqdm import tqdm
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def mirror_padding(image, top_padding, bottom_padding, left_padding, right_padding):
     h, w = image.shape
     new_h = h + top_padding + bottom_padding
@@ -71,7 +73,6 @@ def patchDivision(data, step=16):
     return subblcks_corrupt
 
 def seismicEnhancement(data,shape,step=16):
-
     blksz = (128,128)
     stpsz = (step,step)
     model = AttU_Net(img_ch=1,output_ch=1).to(device)
@@ -95,3 +96,7 @@ def seismicEnhancement(data,shape,step=16):
     #print("creating image from patching, time is:",
     #            timeit.default_timer() - start)
     return imgd_median
+
+def save2dData(data):
+
+    pass
