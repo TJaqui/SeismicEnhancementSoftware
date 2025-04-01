@@ -23,6 +23,7 @@ class MainWindow(QMainWindow):
         #self.layout.addWidget(self.canvas)
         self.canvas.setFixedSize(500, 300)
         self.openfile.clicked.connect(self.browsefiles)  # Ahora sí debería reconocer el botón
+        self.actionOpen_file.triggered.connect(self.browsefiles)
 
     def browsefiles(self):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'C:/')
@@ -41,7 +42,8 @@ class MainWindow(QMainWindow):
         self.canvas.ax.set_title("Example Plot")
         self.canvas.draw()
 
-app = QApplication(sys.argv)
-mainwindow = MainWindow()
-mainwindow.show()
-sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    mainwindow = MainWindow()
+    mainwindow.show()
+    sys.exit(app.exec_())
