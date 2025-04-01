@@ -50,12 +50,19 @@ class MainWindow(QMainWindow):
         self.canvas.setFixedSize(900, 500)
         self.openfile.clicked.connect(self.browsefiles)  
         self.enhancedata.clicked.connect(self.enhanceData)
+        self.beforeenhancement.setVisible(False)
+        self.afterenhancement.setVisible(False)
+        self.beforeenhancement.clicked.connect(self.showBeforeEnhancement)  
+        self.afterenhancement.clicked.connect(self.showAfterEnhancement)
         #self.savedata.clicked.connect(self.saveData)
 
     def browsefiles(self):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'C:/')
         print(fname)  
         self.plotsgy(fname)
+        self.beforeenhancement.setVisible(True)
+        self.afterenhancement.setVisible(False)
+        
 
     def plotsgy(self,file):
         file = segyio.open(file,ignore_geometry=True)
@@ -81,11 +88,24 @@ class MainWindow(QMainWindow):
             self.canvas.ax.imshow(self.dataEnhanced, cmap="gray")
             #self.canvas.ax.legend()
             self.canvas.draw()
-
+            self.afterenhancement.setVisible(True)
         except:
             print("First you need to open a file")
    
-        
+    def showBeforeEnhancement(self):
+        """Displays the original seismic data before enhancement."""
+        if self.data is not None:
+            self.canvas.ax.clear()
+            self.canvas.ax.imshow(self.data, cmap="gray")
+            self.canvas.draw()
+
+    def showAfterEnhancement(self):
+        """Displays the enhanced seismic data."""
+        if self.dataEnhanced is not None:
+            self.canvas.ax.clear()
+            self.canvas.ax.imshow(self.dataEnhanced, cmap="gray")
+            self.canvas.draw() 
+
     def saveData(self):
         utils.save2dData(self.dataEnhanced)
 
