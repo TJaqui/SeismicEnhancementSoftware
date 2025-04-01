@@ -19,6 +19,7 @@ class MplCanvas(FigureCanvas):
         self.zoom_factor = 1.2  # Factor for zooming in/out
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFocus()
+
     def wheelEvent(self, event):
         """Handles mouse scroll for zooming."""
         zoom_in = event.angleDelta().y() > 0  # Detect scroll direction
@@ -46,7 +47,7 @@ class MainWindow(QMainWindow):
         # Add canvas to a layout inside the main window
         self.layout = QVBoxLayout(self.centralwidget)  
       
-        self.canvas.setFixedSize(600, 400)
+        self.canvas.setFixedSize(900, 500)
         self.openfile.clicked.connect(self.browsefiles)  
         self.enhancedata.clicked.connect(self.enhanceData)
         #self.savedata.clicked.connect(self.saveData)
@@ -59,7 +60,7 @@ class MainWindow(QMainWindow):
     def plotsgy(self,file):
         file = segyio.open(file,ignore_geometry=True)
         self.data = file.trace.raw[:].T
-        self.layout.addWidget(self.canvas, stretch=1)
+        self.layout.addWidget(self.canvas, stretch=1,alignment=Qt.AlignRight)
         self.canvas.ax.clear()
         self.canvas.ax.imshow(self.data, cmap="gray")
         self.canvas.draw()
@@ -73,7 +74,7 @@ class MainWindow(QMainWindow):
             TestData /=TestData.max()
             
             patches = utils.patchDivision(TestData)
-            self.layout.addWidget(self.canvas, stretch=1)
+            self.layout.addWidget(self.canvas, stretch=1, alignment=Qt.AlignRight)
             self.canvas.ax.clear()
             self.dataEnhanced = utils.seismicEnhancement(patches,TestData.shape)
             self.dataEnhanced = self.dataEnhanced[top:self.dataEnhanced.shape[0]-bot,lf:self.dataEnhanced.shape[1]-rt]
