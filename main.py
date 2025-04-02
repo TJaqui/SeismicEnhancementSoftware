@@ -56,6 +56,9 @@ class MainWindow(QMainWindow):
         self.afterenhancement.clicked.connect(self.showAfterEnhancement)
         #self.savedata.clicked.connect(self.saveData)
 
+        # Add file actions
+        self.actionOpen_file.triggered.connect(self.browsefiles)
+
     def browsefiles(self):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'C:/')
         print(fname)  
@@ -111,8 +114,8 @@ class MainWindow(QMainWindow):
 
 
 
-
-app = QApplication(sys.argv)
-mainwindow = MainWindow()
-mainwindow.show()
-sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    mainwindow = MainWindow()
+    mainwindow.show()
+    sys.exit(app.exec_())
