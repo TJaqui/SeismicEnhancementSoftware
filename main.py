@@ -46,7 +46,15 @@ class MainWindow(QMainWindow):
         self.data = None
         self.dataEnhanced = None
         self.canvas = MplCanvas(self)
-
+        
+        self.topBar.setVisible(True)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(10)
+        shadow.setXOffset(0)
+        shadow.setYOffset(5)
+        shadow.setColor(QColor(0, 0, 0, 100))
+        self.topBar.setGraphicsEffect(shadow)
+        
         self.leftBar.setVisible(False)
 
         # Remove fixed size so it resizes dynamically
@@ -79,6 +87,9 @@ class MainWindow(QMainWindow):
         self.beforeenhancement.clicked.connect(self.showBeforeEnhancement)  
         self.afterenhancement.clicked.connect(self.showAfterEnhancement)
 
+        # Add file actions
+        self.actionOpen_file.triggered.connect(self.browsefiles)
+
     def browsefiles(self):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'C:/')
         print(fname)  
@@ -93,6 +104,7 @@ class MainWindow(QMainWindow):
         file = segyio.open(file,ignore_geometry=True)
         self.data = file.trace.raw[:].T
         self.layout.addWidget(self.canvas, stretch=1)
+        self.layout.setContentsMargins(0, 30, 0, 0)
         self.canvas.lower() 
         self.canvas.ax.clear()
         self.canvas.ax.imshow(self.data, cmap="gray")
@@ -142,8 +154,8 @@ class MainWindow(QMainWindow):
 
 
 
-
-app = QApplication(sys.argv)
-mainwindow = MainWindow()
-mainwindow.show()
-sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    mainwindow = MainWindow()
+    mainwindow.show()
+    sys.exit(app.exec_())
