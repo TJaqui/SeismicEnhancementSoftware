@@ -229,6 +229,23 @@
      <number>24</number>
     </property>
    </widget>
+   <widget class="QFrame" name="topBar">
+    <property name="geometry">
+     <rect>
+      <x>-10</x>
+      <y>-20</y>
+      <width>1141</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string>background-color: white;</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::NoFrame</enum>
+    </property>
+   </widget>
+   <zorder>topBar</zorder>
    <zorder>leftBar</zorder>
    <zorder>checkBox</zorder>
    <zorder>checkBox_2</zorder>
@@ -253,7 +270,7 @@
      <x>0</x>
      <y>0</y>
      <width>1125</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
