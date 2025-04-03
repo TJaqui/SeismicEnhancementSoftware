@@ -14,6 +14,22 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <widget class="QFrame" name="leftBar">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>90</y>
+      <width>122</width>
+      <height>971</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string>background-color: white;</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::NoFrame</enum>
+    </property>
+   </widget>
    <widget class="QCheckBox" name="checkBox">
     <property name="geometry">
      <rect>
@@ -178,7 +194,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>100</y>
+      <y>90</y>
       <width>121</width>
       <height>81</height>
      </rect>
@@ -191,7 +207,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>180</y>
+      <y>170</y>
       <width>121</width>
       <height>81</height>
      </rect>
@@ -200,6 +216,36 @@
      <string>Enhanced</string>
     </property>
    </widget>
+   <widget class="QProgressBar" name="progressBar">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>300</y>
+      <width>281</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="value">
+     <number>24</number>
+    </property>
+   </widget>
+   <zorder>leftBar</zorder>
+   <zorder>checkBox</zorder>
+   <zorder>checkBox_2</zorder>
+   <zorder>checkBox_3</zorder>
+   <zorder>toolButton_2</zorder>
+   <zorder>spinBox</zorder>
+   <zorder>spinBox_2</zorder>
+   <zorder>spinBox_3</zorder>
+   <zorder>checkBox_4</zorder>
+   <zorder>checkBox_5</zorder>
+   <zorder>checkBox_6</zorder>
+   <zorder>enhancedata</zorder>
+   <zorder>toolButton_4</zorder>
+   <zorder>openfile</zorder>
+   <zorder>progressBar</zorder>
+   <zorder>beforeenhancement</zorder>
+   <zorder>afterenhancement</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
