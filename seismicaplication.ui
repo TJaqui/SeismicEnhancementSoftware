@@ -99,7 +99,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../../Respaldo_3925/icons/savefile.png</normaloff>../../Respaldo_3925/icons/savefile.png</iconset>
+      <normaloff>icons/savefile.png</normaloff>icons/savefile.png</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -194,7 +194,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../../Respaldo_3925/icons/enhance.png</normaloff>../../Respaldo_3925/icons/enhance.png</iconset>
+      <normaloff>icons/enhance.png</normaloff>icons/enhance.png</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -220,7 +220,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normalon>../../Respaldo_3925/icons/adapt_to_data.png</normalon>
+      <normalon>icons/adapt_to_data.png</normalon>
      </iconset>
     </property>
     <property name="iconSize">
@@ -250,7 +250,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normalon>../../Respaldo_3925/icons/openfile.png</normalon>
+      <normalon>icons/openfile.png</normalon>
      </iconset>
     </property>
     <property name="iconSize">
@@ -273,8 +273,7 @@
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">
-</string>
+     <string notr="true"/>
     </property>
     <property name="text">
      <string>Seismic field</string>
