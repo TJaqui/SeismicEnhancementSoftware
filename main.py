@@ -4,7 +4,8 @@ import segyio
 import utils
 import time
 from PyQt5.QtGui import QColor
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 from matplotlib.figure import Figure
@@ -85,10 +86,9 @@ class MainWindow(QMainWindow):
         self.afterenhancement.setVisible(False)
         
         self.beforeenhancement.clicked.connect(self.showBeforeEnhancement)  
-        self.afterenhancement.clicked.connect(self.showAfterEnhancement)
-
-        # Add file actions
-        self.actionOpen_file.triggered.connect(self.browsefiles)
+        self.afterenhancement.clicked.connect(self.showAfterEnhancement) 
+        
+        self.labeldata.setStyleSheet("font-weight: bold;")
 
     def browsefiles(self):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'C:/')
