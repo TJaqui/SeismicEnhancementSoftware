@@ -8,6 +8,29 @@ from tqdm import tqdm
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def mirror_padding(image, top_padding, bottom_padding, left_padding, right_padding):
+    """
+    It applies mirror padding to a given 2D array. 
+    It extends the image by adding rows and columns around its borders using a mirror reflection of the image's edge pixels.
+
+    Parameters
+    ----------
+    image: ndarrat
+        A 2D array representing the input image whose pixels are to be padded.
+    top_padding: int
+        An integer specifying the number of rows to be added to the top of the image by mirroring the top edge.
+    bottom_padding: int
+        An integer specifying the number of rows to be added to the bottom of the image by mirroring the bottom edge.
+    left_padding: int
+        An integer specifying the number of columns to be added to the left of the image by mirroring the left edge.
+    right_padding: int
+        An integer specifying the number of columns to be added to the right of the image by mirroring the right edge.
+
+    Return
+    -------
+    padded_image : ndarray
+        An array that includes the original image centered within a border of mirror-padded pixels, 
+        having dimensions increased by the specified padding on all sides.
+    """
     h, w = image.shape
     new_h = h + top_padding + bottom_padding
     new_w = w + left_padding + right_padding
@@ -42,6 +65,29 @@ def mirror_padding(image, top_padding, bottom_padding, left_padding, right_paddi
     return padded_image
 
 def padding(img):
+    """
+    It extends the image by adding rows and columns around its borders using a mirror reflection 
+    of the image's edge pixels.
+
+    Parameters
+    ----------
+    img : ndarray
+        A 2D array representing the input image whose dimensions are to be adjusted to the nearest 
+        multiple of 128 through mirror padding.
+
+    Return
+    ------
+    padd_img : ndarray
+        The mirror-padded image with height and width adjusted to the nearest multiple of 128.
+    top : int
+        Number of rows added to the top of the image.
+    bot : int
+        Number of rows added to the bottom of the image.
+    lf : int
+        Number of columns added to the left of the image.
+    rt : int
+        Number of columns added to the right of the image.
+    """
     padd_img = img
     if (img.shape[0] % 128 != 0):
         pad = math.ceil(img.shape[0]/128)*128 - img.shape[0]
@@ -64,6 +110,24 @@ def padding(img):
     return padd_img, top, bot, lf, rt
 
 def patchDivision(data, step=16):
+    """
+    It divides a 2D array into overlapping patches using a sliding window approach.
+    The function extracts 128x128 blocks from the data with a specified step size,
+    transposes the block dimensions, and converts the result into a PyTorch tensor with an added channel dimension.
+
+    Parameters
+    ----------
+    data : ndarray
+        A 2D array representing the input image or data from which patches are to be extracted.
+    step : int
+        An integer specifying the step size for the sliding window when extracting patches. 
+        By default this parameter is set to 16.
+
+    Return
+    ------
+    subblcks_corrupt : torch.Tensor
+        A PyTorch tensor containing the extracted patches. The patches are unsqueezed to include a channel dimension.
+    """
     singleffid = data.copy()
     blksz = (128,128)
     stpsz = (step,step)
@@ -73,6 +137,27 @@ def patchDivision(data, step=16):
     return subblcks_corrupt
 
 def seismicEnhancement(data,shape,step=16):
+    """
+    It performs seismic data enhancement using a pre-trained model.
+    The function processes the input data by dividing it into patches, passing each patch through the model 
+    for denoising/enhancement, and then concatenates the enhanced patches.
+
+    Parameters
+    ----------
+    data : dataset-like
+        The input data containing seismic images or signals to be enhanced. This data is expected to be compatible 
+        with PyTorch's DataLoader.
+    shape : tuple
+        A tuple specifying the target shape of the enhanced seismic data.
+    step : int, optional
+        An integer specifying the step size for patch extraction, which determines the overlap between patches.
+        By default this parameter is set to 16.
+
+    Return
+    ------
+    recov_blcks : torch.Tensor
+        A PyTorch tensor containing the enhanced seismic blocks obtained by concatenating the model's output from all batches.
+    """
     blksz = (128,128)
     stpsz = (step,step)
     model = AttU_Net(img_ch=1,output_ch=1).to(device)
