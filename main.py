@@ -150,7 +150,7 @@ class MainWindow(QMainWindow):
         shadow.setColor(QColor(0, 0, 0, 100))
         self.leftBar.setGraphicsEffect(shadow)
 
-        self.enhancedata.setEnabled(False) 
+        self.enhancedata.setEnabled(True) 
         self.adapttodata.setEnabled(False) 
         self.savefile.setEnabled(False) 
         self.openfile.clicked.connect(self.browsefiles) 
