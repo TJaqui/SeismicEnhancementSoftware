@@ -72,7 +72,7 @@
      <enum>Qt::ToolButtonTextUnderIcon</enum>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_4">
+   <widget class="QCheckBox" name="Wiggle">
     <property name="geometry">
      <rect>
       <x>260</x>
@@ -85,7 +85,7 @@
      <string>Wiggle</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_5">
+   <widget class="QCheckBox" name="Seismic">
     <property name="geometry">
      <rect>
       <x>260</x>
@@ -98,7 +98,7 @@
      <string>Seismic</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_6">
+   <widget class="QCheckBox" name="Gray">
     <property name="geometry">
      <rect>
       <x>260</x>
@@ -242,9 +242,9 @@
    <zorder>leftBar</zorder>
    <zorder>topBar</zorder>
    <zorder>savefile</zorder>
-   <zorder>checkBox_4</zorder>
-   <zorder>checkBox_5</zorder>
-   <zorder>checkBox_6</zorder>
+   <zorder>Wiggle</zorder>
+   <zorder>Seismic</zorder>
+   <zorder>Gray</zorder>
    <zorder>enhancedata</zorder>
    <zorder>adapttodata</zorder>
    <zorder>openfile</zorder>

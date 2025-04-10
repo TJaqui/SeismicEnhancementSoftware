@@ -162,8 +162,8 @@ def seismicEnhancement(data,shape,step=16):
     stpsz = (step,step)
     model = AttU_Net(img_ch=1,output_ch=1).to(device)
     model.eval()
-    model.load_state_dict(torch.load('checkpoints/att_u_fine.pt', weights_only=False))
-    data_loader = torch.utils.data.DataLoader(data, batch_size=40)
+    model.load_state_dict(torch.load('checkpoints/att_u_fine.pt', weights_only=False,map_location=torch.device("cpu")))
+    data_loader = torch.utils.data.DataLoader(data, batch_size=5)
     denoised_tensor_list = []
 
     for batch in tqdm(data_loader):
