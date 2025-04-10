@@ -40,15 +40,18 @@ class MplCanvas(FigureCanvas):
 
 from PyQt5.QtWidgets import QSizePolicy  # Import QSizePolicy
 class RangeDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, data=None):
         super().__init__(parent)
         self.setWindowTitle("Set Ranges")
-        self.setFixedSize(300, 150)
+        self.setFixedSize(400, 400)
+
+        self.data = data
+        self.canvas = MplCanvas(self)
 
         self.x_from = QLineEdit("0")
-        self.x_to = QLineEdit("500")
-        self.y_from = QLineEdit("100")
-        self.y_to = QLineEdit("200")
+        self.x_to = QLineEdit(str(data.shape[1]) if data is not None else "500")
+        self.y_from = QLineEdit("0")
+        self.y_to = QLineEdit(str(data.shape[0]) if data is not None else "500")
 
         layout = QVBoxLayout()
 
@@ -68,6 +71,9 @@ class RangeDialog(QDialog):
         y_layout.addWidget(self.y_to)
         layout.addLayout(y_layout)
 
+        # Canvas for plot
+        layout.addWidget(self.canvas)
+
         # Buttons
         btn_layout = QHBoxLayout()
         ok_btn = QPushButton("ok")
@@ -79,11 +85,28 @@ class RangeDialog(QDialog):
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
 
+        # Update preview when values change
+        for box in [self.x_from, self.x_to, self.y_from, self.y_to]:
+            box.textChanged.connect(self.update_plot)
+
         self.setLayout(layout)
+        self.update_plot()  # Initial preview
 
     def get_ranges(self):
         return (int(self.x_from.text()), int(self.x_to.text()),
                 int(self.y_from.text()), int(self.y_to.text()))
+
+    def update_plot(self):
+        try:
+            x_start, x_end, y_start, y_end = self.get_ranges()
+            if self.data is not None:
+                cropped = self.data[y_start:y_end, x_start:x_end]
+                self.canvas.ax.clear()
+                self.canvas.ax.imshow(cropped, cmap="gray")
+                self.canvas.draw()
+        except Exception as e:
+            # Ignore invalid input temporarily
+            pass
     
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -170,11 +193,10 @@ class MainWindow(QMainWindow):
             self.canvas.draw()
         
     def showRangeDialog(self):
-        dialog = RangeDialog(self)
+        dialog = RangeDialog(self, data=self.data)
         if dialog.exec_() == QDialog.Accepted:
             x_start, x_end, y_start, y_end = dialog.get_ranges()
             print(f"Selected range: x={x_start}-{x_end}, y={y_start}-{y_end}")
-            # Use these values to adapt your data
             if self.data is not None:
                 cropped = self.data[y_start:y_end, x_start:x_end]
                 self.canvas.ax.clear()
