@@ -207,7 +207,8 @@ class MainWindow(QMainWindow):
         self.data = None
         self.dataEnhanced = None
         self.datatoEnhanced = None
-
+        self.d3 = False
+        self.d2 = True
         self.canvas = MplCanvas(self)
         self.progressbar = QProgressBar()
         self.progressbar.setMinimum(0)
@@ -380,9 +381,10 @@ class MainWindow(QMainWindow):
             time.sleep(0.3)
  
             self.dataEnhanced[ y_start: y_end, x_start: x_end ] = self.datatoEnhanced[top:self.datatoEnhanced.shape[0]-bot, lf:self.datatoEnhanced.shape[1]-rt]
-            #if all(self.dataEnhanced) == all(self.data):
-                #print("se murirririroereoreorirfaeoraoproairiairoauf")
-            self.canvas.ax.imshow(self.dataEnhanced, cmap="gray")
+
+ 
+            cmap = getattr(self, "Color", "gray") 
+            self.canvas.ax.imshow(self.dataEnhanced, cmap=cmap)
             self.canvas.draw()
             
             self.afterenhancement.setVisible(True)
