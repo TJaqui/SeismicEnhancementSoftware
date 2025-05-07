@@ -45,7 +45,7 @@ class RangeDialog(QDialog):
         self.setWindowTitle("Set Ranges")
         self.setFixedSize(400, 400)
 
-        self.data = data
+        self.data = data.copy()
         self.canvas = MplCanvas(self)
 
         self.x_from = QLineEdit("0")
@@ -313,8 +313,8 @@ class MainWindow(QMainWindow):
             if dialog.exec_() == QDialog.Accepted:
                 x_start, x_end, y_start, y_end = dialog.get_ranges()
             QApplication.processEvents()  # <- Forzar actualización UI
-            self.dataEnhanced = self.data
-            self.datatoEnhanced = self.data[y_start: y_end,x_start: x_end ].copy()
+            self.dataEnhanced = self.data.copy()
+            self.datatoEnhanced = self.data[y_start: y_end,x_start: x_end ]
             
             TestData, top, bot, lf, rt = utils.padding(self.datatoEnhanced)
      
@@ -327,7 +327,7 @@ class MainWindow(QMainWindow):
             time.sleep(0.01)
             QApplication.processEvents()
             self.progressbar.setValue(20)
-            patches = utils.patchDivision(TestData.copy())
+            patches = utils.patchDivision(TestData)
             self.progressbar.setValue(40)
             QApplication.processEvents()
             time.sleep(0.01)
@@ -350,7 +350,8 @@ class MainWindow(QMainWindow):
             time.sleep(0.3)
  
             self.dataEnhanced[ y_start: y_end, x_start: x_end ] = self.datatoEnhanced[top:self.datatoEnhanced.shape[0]-bot, lf:self.datatoEnhanced.shape[1]-rt]
-       
+            #if all(self.dataEnhanced) == all(self.data):
+                #print("se murirririroereoreorirfaeoraoproairiairoauf")
             self.canvas.ax.imshow(self.dataEnhanced, cmap="gray")
             self.canvas.draw()
             
@@ -376,13 +377,13 @@ class MainWindow(QMainWindow):
 
     def showAfterEnhancement(self):
         """Displays the enhanced seismic data."""
+    
         if self.dataEnhanced is not None:
             self.canvas.ax.clear()
             self.canvas.ax.imshow(self.dataEnhanced, cmap="gray")
             self.canvas.draw() 
 
     def saveData(self):
-        
         dname = QFileDialog.getExistingDirectory(self, 'Open file', 'C:/')
         utils.save2dData(self.dataEnhanced,fname, dname, datamin, datamax)
 
