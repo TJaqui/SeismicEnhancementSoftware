@@ -9,6 +9,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 from matplotlib.figure import Figure
+from PyQt5.QtWidgets import QSizePolicy 
+from PyQt5.QtWidgets import QButtonGroup
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QVBoxLayout, QGraphicsDropShadowEffect, QFrame, QProgressBar, QMessageBox, QLineEdit, QPushButton, QHBoxLayout, QLabel, QDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -38,7 +40,7 @@ class MplCanvas(FigureCanvas):
         self.ax.set_ylim([y_center - y_range / 2, y_center + y_range / 2])
         self.draw()
 
-from PyQt5.QtWidgets import QSizePolicy  # Import QSizePolicy
+
 class RangeDialog(QDialog):
     def __init__(self, parent=None, data=None):
         super().__init__(parent)
@@ -205,7 +207,8 @@ class MainWindow(QMainWindow):
         self.data = None
         self.dataEnhanced = None
         self.datatoEnhanced = None
-
+        self.d3 = False
+        self.d2 = True
         self.canvas = MplCanvas(self)
         self.progressbar = QProgressBar()
         self.progressbar.setMinimum(0)
@@ -242,6 +245,10 @@ class MainWindow(QMainWindow):
         shadow.setColor(QColor(0, 0, 0, 100))
         self.leftBar.setGraphicsEffect(shadow)
 
+        #setenable checkboxes
+        self.Seismic.setEnabled(False)
+        self.Gray.setEnabled(False) 
+        self.Wiggle.setEnabled(False)
         self.enhancedata.setEnabled(False) 
         self.adapttodata.setEnabled(False) 
         self.savefile.setEnabled(False) 
@@ -257,6 +264,24 @@ class MainWindow(QMainWindow):
         self.afterenhancement.clicked.connect(self.showAfterEnhancement) 
         self.savefile.clicked.connect(self.saveData) 
         self.labeldata.setStyleSheet("font-weight: bold;")
+        self.ColorButtons()
+
+    def ColorButtons(self):
+        self.colorGroup = QButtonGroup(self)
+        self.colorGroup.setExclusive(True)
+
+        self.colorGroup.addButton(self.Seismic, 0)  # Seismic
+        self.colorGroup.addButton(self.Gray, 1)  # Gray
+        self.colorGroup.addButton(self.Wiggle, 2)  # Wiggle
+        
+        self.colorGroup.buttonClicked[int].connect(self.ColorSelected)
+
+
+    def ColorSelected(self, id):
+        colors = ["seismic", "gray", "wiggle"]
+        self.Color = colors[id]
+        print("Color seleccionado:", self.Color)
+
 
     def browsefiles(self):
         global fname
@@ -270,6 +295,9 @@ class MainWindow(QMainWindow):
             self.adapttodata.setEnabled(True) 
             self.savefile.setEnabled(True)  
             self.afterenhancement.setVisible(False)
+            self.Seismic.setEnabled(True)
+            self.Gray.setEnabled(True)
+            self.Wiggle.setEnabled(True)
             
         except:
             pass
@@ -291,7 +319,10 @@ class MainWindow(QMainWindow):
             self.layout.setContentsMargins(0, 30, 0, 0)
             self.canvas.lower() 
             self.canvas.ax.clear()
-            self.canvas.ax.imshow(self.data, cmap="gray")
+            self.colorGroup.button(1).setChecked(True)
+            self.ColorSelected(1)
+            cmap = getattr(self, "Color", "gray")
+            self.canvas.ax.imshow(self.data, cmap=cmap)
             self.canvas.draw()
         
     def showRangeDialog(self):
@@ -350,9 +381,10 @@ class MainWindow(QMainWindow):
             time.sleep(0.3)
  
             self.dataEnhanced[ y_start: y_end, x_start: x_end ] = self.datatoEnhanced[top:self.datatoEnhanced.shape[0]-bot, lf:self.datatoEnhanced.shape[1]-rt]
-            #if all(self.dataEnhanced) == all(self.data):
-                #print("se murirririroereoreorirfaeoraoproairiairoauf")
-            self.canvas.ax.imshow(self.dataEnhanced, cmap="gray")
+
+ 
+            cmap = getattr(self, "Color", "gray") 
+            self.canvas.ax.imshow(self.dataEnhanced, cmap=cmap)
             self.canvas.draw()
             
             self.afterenhancement.setVisible(True)
@@ -372,7 +404,8 @@ class MainWindow(QMainWindow):
         """Displays the original seismic data before enhancement."""
         if self.data is not None:
             self.canvas.ax.clear()
-            self.canvas.ax.imshow(self.data, cmap="gray")
+            cmap = getattr(self, "Color", "gray") 
+            self.canvas.ax.imshow(self.data, cmap=cmap)
             self.canvas.draw()
 
     def showAfterEnhancement(self):
@@ -380,7 +413,8 @@ class MainWindow(QMainWindow):
     
         if self.dataEnhanced is not None:
             self.canvas.ax.clear()
-            self.canvas.ax.imshow(self.dataEnhanced, cmap="gray")
+            cmap = getattr(self, "Color", "gray")
+            self.canvas.ax.imshow(self.dataEnhanced, cmap=cmap)
             self.canvas.draw() 
 
     def saveData(self):
