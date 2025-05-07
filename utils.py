@@ -4,6 +4,7 @@ import numpy as np
 from sporco import array,plot,util
 from models.Attention_unet import AttU_Net
 from tqdm import tqdm
+import segyio
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -182,6 +183,40 @@ def seismicEnhancement(data,shape,step=16):
     #            timeit.default_timer() - start)
     return imgd_median
 
-def save2dData(data):
+def save2dData(data, data_name, path, dmin, dmax):
+    denorm_enhanced = data
+    output_file = data_name
+    dstpath = f"{path}/enhanced.sgy"
+    with segyio.open(output_file, 'r+', ignore_geometry=True) as src:
 
-    pass
+        src.trace.raw[:][:] = denorm_enhanced.T
+        
+        spec = segyio.spec()
+        #spec.sorting = src.sorting
+        spec.format = src.format
+        spec.samples = src.samples
+        spec.tracecount = src.tracecount
+        with segyio.create(dstpath, spec) as dst:
+            dst.text[0] = src.text[0]
+            dst.bin = src.bin
+            dst.header = src.header
+            dst.trace = src.trace
+    
+def save3dData(data, data_name, path, dmin, dmax):
+    denorm_enhanced = data
+    output_file = data_name
+    dstpath = "path/enhanced.sgy"
+    with segyio.open(output_file, 'r+', ignore_geometry=True) as src:
+
+        src.trace.raw[:][:,:] = denorm_enhanced.T
+        
+        spec = segyio.spec()
+        #spec.sorting = src.sorting
+        spec.format = src.format
+        spec.samples = src.samples
+        spec.tracecount = src.tracecount
+        with segyio.create(dstpath, spec) as dst:
+            dst.text[0] = src.text[0]
+            dst.bin = src.bin
+            dst.header = src.header
+            dst.trace = src.trace
