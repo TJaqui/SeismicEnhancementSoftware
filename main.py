@@ -8,11 +8,13 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
+from finetuning import parallelTrain
 from matplotlib.figure import Figure
 from PyQt5.QtWidgets import QSizePolicy 
 from PyQt5.QtWidgets import QButtonGroup
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QVBoxLayout, QGraphicsDropShadowEffect, QFrame, QProgressBar, QMessageBox, QLineEdit, QPushButton, QHBoxLayout, QLabel, QDialog
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QVBoxLayout, QGraphicsDropShadowEffect, QCheckBox, QFrame, QProgressBar, QMessageBox, QLineEdit, QPushButton, QHBoxLayout, QLabel, QDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 global fname, x_start, x_end, y_start, y_end, datamin, datamax
@@ -97,6 +99,7 @@ class RangeDialog(QDialog):
     def get_ranges(self):
         return (int(self.x_from.text()), int(self.x_to.text()),
                 int(self.y_from.text()), int(self.y_to.text()))
+    
 
     def update_plot(self):
         try:
@@ -124,6 +127,10 @@ class RangeDialogAd(QDialog):
         self.x_to = QLineEdit(str(data.shape[1]) if data is not None else "500")
         self.y_from = QLineEdit("0")
         self.y_to = QLineEdit(str(data.shape[0]) if data is not None else "500")
+        self.batch = QLineEdit("5")
+        self.iterations = QLineEdit("1")
+        self.epochs = QLineEdit("30")
+        self.gensamples = QLineEdit("100")
 
         layout = QVBoxLayout()
 
@@ -140,6 +147,20 @@ class RangeDialogAd(QDialog):
         y_layout.addWidget(QLabel("-"))
         y_layout.addWidget(self.y_to)
         layout.addLayout(y_layout)
+
+        z_layout = QHBoxLayout()
+        z_layout.addWidget(QLabel("Batch"))
+        z_layout.addWidget(self.batch)
+        z_layout.addWidget(QLabel("Iterations"))
+        z_layout.addWidget(self.iterations)
+        layout.addLayout(z_layout)
+
+        a_layout = QHBoxLayout()
+        a_layout.addWidget(QLabel("Epochs"))
+        a_layout.addWidget(self.epochs)
+        a_layout.addWidget(QLabel("Samples"))
+        a_layout.addWidget(self.gensamples)
+        layout.addLayout(a_layout)
 
         layout.addWidget(self.canvas)
 
@@ -187,6 +208,9 @@ class RangeDialogAd(QDialog):
     def get_ranges(self):
         return (int(self.x_from.text()), int(self.x_to.text()),
                 int(self.y_from.text()), int(self.y_to.text()))
+    def get_train_data(self):
+        return (int(self.batch.text()), int(self.iterations.text()),
+                int(self.epochs.text()), int(self.gensamples.text()))
 
     def update_plot(self):
         try:
@@ -199,6 +223,55 @@ class RangeDialogAd(QDialog):
         except Exception:
             pass
 
+class DialogDim(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select data dimensions")
+        self.setFixedSize(200, 200)
+
+    
+        self.d3 = QCheckBox("3D")
+        self.d2 = QCheckBox("2D")
+
+        # Conectar para comportamiento exclusivo
+        self.d3.stateChanged.connect(self.on_d3_checked)
+        self.d2.stateChanged.connect(self.on_d2_checked)
+
+        layout = QVBoxLayout()
+        x_layout = QHBoxLayout()
+        x_layout.addWidget(self.d3)
+        x_layout.addWidget(self.d2)
+        layout.addLayout(x_layout)
+
+        btn_layout = QHBoxLayout()
+        ok_btn = QPushButton("ok")
+        cancel_btn = QPushButton("cancel")
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
+        btn_layout.addStretch()
+        btn_layout.addWidget(ok_btn)
+        btn_layout.addWidget(cancel_btn)
+        layout.addLayout(btn_layout)
+
+        self.setLayout(layout)
+
+    def on_d3_checked(self, state):
+        if state:
+            self.d2.setChecked(False)
+
+    def on_d2_checked(self, state):
+        if state:
+            self.d3.setChecked(False)
+
+    def get_Checked(self):
+        if self.d3.isChecked():
+            return True, False
+        if self.d2.isChecked():
+            return False, True
+
+    
+
+   
     
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -260,7 +333,7 @@ class MainWindow(QMainWindow):
         self.afterenhancement.setVisible(False)
         
         self.beforeenhancement.clicked.connect(self.showBeforeEnhancement)  
-        self.adapttodata.clicked.connect(self.showRangeDialog)  
+        self.adapttodata.clicked.connect(self.AdaptToData)  
         self.afterenhancement.clicked.connect(self.showAfterEnhancement) 
         self.savefile.clicked.connect(self.saveData) 
         self.labeldata.setStyleSheet("font-weight: bold;")
@@ -284,11 +357,21 @@ class MainWindow(QMainWindow):
 
 
     def browsefiles(self):
+        
         global fname
-        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'C:/')
-        print(fname)
-        try:  
-            self.plotsgy(fname)
+        
+        #print(fname)
+        try:
+            dimen = DialogDim(self)
+            if dimen.exec_() == QDialog.Accepted:    
+                fname, _ = QFileDialog.getOpenFileName(self, 'Open file', 'C:/')
+                d3, d2 = dimen.get_Checked()
+                self.d2 = d2
+                self.d3 = d3
+            if d2:
+                self.plotsgy2d(fname)
+            elif d3:
+                self.plotsgy3d(fname)
             self.leftBar.setVisible(True)
             self.beforeenhancement.setVisible(True)
             self.enhancedata.setEnabled(True)
@@ -302,7 +385,7 @@ class MainWindow(QMainWindow):
         except:
             pass
 
-    def plotsgy(self,file):
+    def plotsgy2d(self,file):
             
             global datamin, datamax
 
@@ -325,17 +408,29 @@ class MainWindow(QMainWindow):
             self.canvas.ax.imshow(self.data, cmap=cmap)
             self.canvas.draw()
         
-    def showRangeDialog(self):
-        dialog = RangeDialogAd(self, data=self.data)
-        if dialog.exec_() == QDialog.Accepted:
-            x_start, x_end, y_start, y_end = dialog.get_ranges()
-            print(f"Selected range: x={x_start}-{x_end}, y={y_start}-{y_end}")
-            if self.data is not None:
-                cropped = self.data[y_start:y_end, x_start:x_end]
-                self.canvas.ax.clear()
-                self.canvas.ax.imshow(cropped, cmap="gray")
-                self.canvas.draw()
-                
+    def plotsgy3d(self,file):
+            
+            global datamin, datamax
+
+            file = segyio.open(file)
+            self.data = file.iline[100].T
+            
+            datamin =  self.data.min()
+            datamax = self.data.max()
+            
+            self.data -= self.data.min()
+            self.data /= self.data.max()
+
+            self.layout.addWidget(self.canvas, stretch=1)
+            self.layout.setContentsMargins(0, 30, 0, 0)
+            self.canvas.lower() 
+            self.canvas.ax.clear()
+            self.colorGroup.button(1).setChecked(True)
+            self.ColorSelected(1)
+            cmap = getattr(self, "Color", "gray")
+            self.canvas.ax.imshow(self.data, cmap=cmap)
+            self.canvas.draw()
+                    
     def enhanceData(self):
         
         try:
@@ -382,7 +477,6 @@ class MainWindow(QMainWindow):
  
             self.dataEnhanced[ y_start: y_end, x_start: x_end ] = self.datatoEnhanced[top:self.datatoEnhanced.shape[0]-bot, lf:self.datatoEnhanced.shape[1]-rt]
 
- 
             cmap = getattr(self, "Color", "gray") 
             self.canvas.ax.imshow(self.dataEnhanced, cmap=cmap)
             self.canvas.draw()
@@ -417,11 +511,23 @@ class MainWindow(QMainWindow):
             self.canvas.ax.imshow(self.dataEnhanced, cmap=cmap)
             self.canvas.draw() 
 
+    def AdaptToData(self):
+        dialog = RangeDialogAd(self, data=self.data)
+        if dialog.exec_() == QDialog.Accepted:
+            x_start, x_end, y_start, y_end = dialog.get_ranges()
+            batch_size, iterations, epochs, gen_samples = dialog.get_ranges()
+            #print(f"Selected range: x={x_start}-{x_end}, y={y_start}-{y_end}")
+            if self.data is not None:
+                cropped = self.data[y_start:y_end, x_start:x_end]
+                self.canvas.ax.clear()
+                self.canvas.ax.imshow(cropped, cmap="gray")
+                self.canvas.draw()
+        
+        parallelTrain(self.data[y_start:y_end, x_start: x_end], batch_size, epochs, iterations, gen_samples)
+
     def saveData(self):
         dname = QFileDialog.getExistingDirectory(self, 'Open file', 'C:/')
         utils.save2dData(self.dataEnhanced,fname, dname, datamin, datamax)
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
