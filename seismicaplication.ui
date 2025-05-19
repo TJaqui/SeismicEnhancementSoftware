@@ -238,6 +238,160 @@
     <property name="frameShape">
      <enum>QFrame::NoFrame</enum>
     </property>
+    <widget class="QFrame" name="topBar_2">
+     <property name="geometry">
+      <rect>
+       <x>-10</x>
+       <y>0</y>
+       <width>2001</width>
+       <height>101</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string>background-color: white;</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <widget class="QSpinBox" name="clineN">
+      <property name="geometry">
+       <rect>
+        <x>340</x>
+        <y>70</y>
+        <width>42</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="ilineN">
+      <property name="geometry">
+       <rect>
+        <x>340</x>
+        <y>30</y>
+        <width>42</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QToolButton" name="enhancedata_2">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>0</y>
+      <width>121</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Enhance data</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>icons/enhance.png</normaloff>icons/enhance.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>50</width>
+      <height>50</height>
+     </size>
+    </property>
+    <property name="toolButtonStyle">
+     <enum>Qt::ToolButtonTextUnderIcon</enum>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="Wiggle_2">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>50</y>
+      <width>70</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Wiggle</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="adapttodata_2">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>0</y>
+      <width>121</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Adapt to data</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normalon>icons/adapt_to_data.png</normalon>
+     </iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>50</width>
+      <height>50</height>
+     </size>
+    </property>
+    <property name="toolButtonStyle">
+     <enum>Qt::ToolButtonTextUnderIcon</enum>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="Gray_2">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>30</y>
+      <width>70</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Gray</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="Seismic_2">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>10</y>
+      <width>70</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Seismic</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="iline">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>10</y>
+      <width>70</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Iline</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="crossline">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>50</y>
+      <width>70</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Crossline</string>
+    </property>
    </widget>
    <zorder>leftBar</zorder>
    <zorder>topBar</zorder>
@@ -245,11 +399,18 @@
    <zorder>Wiggle</zorder>
    <zorder>Seismic</zorder>
    <zorder>Gray</zorder>
-   <zorder>enhancedata</zorder>
    <zorder>adapttodata</zorder>
    <zorder>openfile</zorder>
    <zorder>beforeenhancement</zorder>
    <zorder>afterenhancement</zorder>
+   <zorder>enhancedata_2</zorder>
+   <zorder>Wiggle_2</zorder>
+   <zorder>adapttodata_2</zorder>
+   <zorder>Gray_2</zorder>
+   <zorder>Seismic_2</zorder>
+   <zorder>iline</zorder>
+   <zorder>crossline</zorder>
+   <zorder>enhancedata</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -273,8 +434,14 @@
      <string>Help</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>About</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen_file">
