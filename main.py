@@ -286,7 +286,8 @@ class MainWindow(QMainWindow):
         self.progressbar = QProgressBar()
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(100)
-        
+        self.file = None
+
         self.topBar.setVisible(True)
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(10)
@@ -306,7 +307,7 @@ class MainWindow(QMainWindow):
         # Create a layout for the plot area
         self.layout = QVBoxLayout(self.centralwidget) 
         self.layout.setContentsMargins(0, 0, 0, 0) 
-          # Make it take full available space
+        # Make it take full available space
 
         self.leftBar = self.findChild(QFrame, "leftBar")
 
@@ -327,17 +328,31 @@ class MainWindow(QMainWindow):
         self.savefile.setEnabled(False) 
         self.openfile.clicked.connect(self.browsefiles) 
         
-        self.enhancedata.clicked.connect(self.enhanceData)
-        
         self.beforeenhancement.setVisible(False)
         self.afterenhancement.setVisible(False)
         
+        self.Seismic_2.setVisible(False)
+        self.Gray_2.setVisible(False) 
+        self.Wiggle_2.setVisible(False)
+        self.enhancedata_2.setVisible(False) 
+        self.adapttodata_2.setVisible(False) 
+        self.ilineN.setVisible(False) 
+        self.clineN.setVisible(False) 
+        self.iline.setVisible(False) 
+        self.crossline.setVisible(False)       
+
+        self.enhancedata.clicked.connect(self.enhanceData)
+        self.enhancedata_2.clicked.connect(self.enhanceData)
         self.beforeenhancement.clicked.connect(self.showBeforeEnhancement)  
         self.adapttodata.clicked.connect(self.AdaptToData)  
+        self.adapttodata_2.clicked.connect(self.AdaptToData)  
         self.afterenhancement.clicked.connect(self.showAfterEnhancement) 
         self.savefile.clicked.connect(self.saveData) 
+        self.ilineN.valueChanged.connect(self.update_plot)
+        self.clineN.valueChanged.connect(self.update_plot)
         self.labeldata.setStyleSheet("font-weight: bold;")
         self.ColorButtons()
+        self.Sectionic()
 
     def ColorButtons(self):
         self.colorGroup = QButtonGroup(self)
@@ -349,11 +364,25 @@ class MainWindow(QMainWindow):
         
         self.colorGroup.buttonClicked[int].connect(self.ColorSelected)
 
-
     def ColorSelected(self, id):
         colors = ["seismic", "gray", "wiggle"]
         self.Color = colors[id]
         print("Color seleccionado:", self.Color)
+
+    def Sectionic(self):
+        self.icGroup = QButtonGroup(self)
+        self.icGroup.setExclusive(True)
+
+        self.icGroup.addButton(self.iline, 0)  # Seismic
+        self.icGroup.addButton(self.crossline, 1)  # Gray
+
+        self.icGroup.buttonClicked[int].connect(self.icSelected)
+
+
+    def icSelected(self, id):
+        ics = ["iline", "crossline"]
+        self.ic = ics[id]
+        print("ic seleccionado:", self.ic)
 
 
     def browsefiles(self):
@@ -371,7 +400,24 @@ class MainWindow(QMainWindow):
             if d2:
                 self.plotsgy2d(fname)
             elif d3:
-                self.plotsgy3d(fname)
+                self.Seismic.setVisible(False)
+                self.Gray.setVisible(False) 
+                self.Wiggle.setVisible(False)
+                self.enhancedata.setVisible(False) 
+                self.adapttodata.setVisible(False) 
+
+                
+                self.Seismic_2.setVisible(True)
+                self.Gray_2.setVisible(True) 
+                self.Wiggle_2.setVisible(True)
+                self.enhancedata_2.setVisible(True) 
+                self.adapttodata_2.setVisible(True)  
+                self.ilineN.setVisible(True) 
+                self.clineN.setVisible(True) 
+                self.iline.setVisible(True) 
+                self.crossline.setVisible(True)   
+                self.plotsgy3d(fname)    
+
             self.leftBar.setVisible(True)
             self.beforeenhancement.setVisible(True)
             self.enhancedata.setEnabled(True)
@@ -389,8 +435,8 @@ class MainWindow(QMainWindow):
             
             global datamin, datamax
 
-            file = segyio.open(file,ignore_geometry=True)
-            self.data = file.trace.raw[:].T
+            self.file = segyio.open(file,ignore_geometry=True)
+            self.data = self.file.trace.raw[:].T
             
             datamin =  self.data.min()
             datamax = self.data.max()
@@ -412,8 +458,16 @@ class MainWindow(QMainWindow):
             
             global datamin, datamax
 
-            file = segyio.open(file)
-            self.data = file.iline[100].T
+            self.file = segyio.open(file)
+            ilines = list(self.file.ilines)
+            xlines = list(self.file.xlines)
+
+            self.ilineN.setMinimum(ilines[0])
+            self.ilineN.setMaximum(ilines[-1])
+
+            self.clineN.setMinimum(xlines[0])
+            self.clineN.setMaximum(xlines[-1])
+            self.data = self.file.iline[ilines[0]].T
             
             datamin =  self.data.min()
             datamax = self.data.max()
@@ -425,12 +479,38 @@ class MainWindow(QMainWindow):
             self.layout.setContentsMargins(0, 30, 0, 0)
             self.canvas.lower() 
             self.canvas.ax.clear()
+            
             self.colorGroup.button(1).setChecked(True)
             self.ColorSelected(1)
             cmap = getattr(self, "Color", "gray")
             self.canvas.ax.imshow(self.data, cmap=cmap)
             self.canvas.draw()
-                    
+    def update_plot(self):
+
+
+        # Get selected line type and number
+        if self.iline.isChecked():
+            line_num = self.ilineN.value()
+            self.data = self.file.iline[line_num].T
+        elif self.crossline.isChecked():
+            line_num = self.clineN.value()
+            self.data = self.file.xline[line_num].T
+        else:
+            return  # No valid option selected
+
+        # Normalize data
+        datamin = self.data.min()
+        datamax = self.data.max()
+        self.data -= datamin
+        if datamax != 0:
+            self.data /= datamax
+
+        # Redraw
+        self.canvas.ax.clear()
+        cmap = getattr(self, "Color", "gray")
+        self.canvas.ax.imshow(self.data, cmap=cmap)
+        self.canvas.draw()
+        print("plot changed")
     def enhanceData(self):
         
         try:
@@ -512,19 +592,27 @@ class MainWindow(QMainWindow):
             self.canvas.draw() 
 
     def AdaptToData(self):
-        dialog = RangeDialogAd(self, data=self.data)
-        if dialog.exec_() == QDialog.Accepted:
-            x_start, x_end, y_start, y_end = dialog.get_ranges()
-            batch_size, iterations, epochs, gen_samples = dialog.get_ranges()
-            #print(f"Selected range: x={x_start}-{x_end}, y={y_start}-{y_end}")
-            if self.data is not None:
-                cropped = self.data[y_start:y_end, x_start:x_end]
-                self.canvas.ax.clear()
-                self.canvas.ax.imshow(cropped, cmap="gray")
-                self.canvas.draw()
-        
-        parallelTrain(self.data[y_start:y_end, x_start: x_end], batch_size, epochs, iterations, gen_samples)
-
+        try:
+            dialog = RangeDialogAd(self, data=self.data)
+            if dialog.exec_() == QDialog.Accepted:
+                x_start, x_end, y_start, y_end = dialog.get_ranges()
+                batch_size, iterations, epochs, gen_samples = dialog.get_ranges()
+                #print(f"Selected range: x={x_start}-{x_end}, y={y_start}-{y_end}")
+                if self.data is not None:
+                    cropped = self.data[y_start:y_end, x_start:x_end]
+                    self.canvas.ax.clear()
+                    self.canvas.ax.imshow(cropped, cmap="gray")
+                    self.canvas.draw()
+            
+            parallelTrain(self.data[y_start:y_end, x_start: x_end], batch_size, epochs, iterations, gen_samples)
+        except Exception as e:
+                    error_dialog = QMessageBox(self)
+                    error_dialog.setWindowTitle("Enhancement Error")
+                    error_dialog.setIcon(QMessageBox.Critical)
+                    error_dialog.setText("An error occurred during data enhancement.")
+                    error_dialog.setInformativeText(str(e))
+                    error_dialog.setStandardButtons(QMessageBox.Ok)
+                    error_dialog.exec_()
     def saveData(self):
         dname = QFileDialog.getExistingDirectory(self, 'Open file', 'C:/')
         utils.save2dData(self.dataEnhanced,fname, dname, datamin, datamax)
