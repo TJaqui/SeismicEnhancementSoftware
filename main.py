@@ -32,6 +32,8 @@ class MainWindow(QMainWindow):
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(100)
         self.file = None
+        self.ilines = None
+        self.xlines = None
 
         self.topBar.setVisible(True)
         shadow = QGraphicsDropShadowEffect(self)
@@ -204,15 +206,15 @@ class MainWindow(QMainWindow):
             global datamin, datamax
 
             self.file = segyio.open(file)
-            ilines = list(self.file.ilines)
-            xlines = list(self.file.xlines)
+            self.ilines = list(self.file.ilines)
+            self.xlines = list(self.file.xlines)
 
-            self.ilineN.setMinimum(ilines[0])
-            self.ilineN.setMaximum(ilines[-1])
+            self.ilineN.setMinimum(self.ilines[0])
+            self.ilineN.setMaximum(self.ilines[-1])
 
-            self.clineN.setMinimum(xlines[0])
-            self.clineN.setMaximum(xlines[-1])
-            self.data = self.file.iline[ilines[0]].T
+            self.clineN.setMinimum(self.xlines[0])
+            self.clineN.setMaximum(self.xlines[-1])
+            self.data = self.file.iline[self.ilines[0]].T
             
             self.iline.setChecked(True)
             datamin =  self.data.min()
@@ -264,7 +266,7 @@ class MainWindow(QMainWindow):
         
         try:
             global x_start, x_end, y_start, y_end
-            dialog = RangeDialog(self, data=self.data)
+            dialog = RangeDialog(self, data=self.data, ilines=self.ilines, xlines=self.xlines)
             if dialog.exec_() == QDialog.Accepted:
                 x_start, x_end, y_start, y_end = dialog.get_ranges()
             QApplication.processEvents()  # <- Forzar actualización UI
@@ -327,15 +329,20 @@ class MainWindow(QMainWindow):
         
         try:
             global x_start, x_end, y_start, y_end
+            
             dialog = RangeDialogEn3D(self, data=self.data)
             if dialog.exec_() == QDialog.Accepted:
                 x_start = dialog.get_ranges()
+
+            
             QApplication.processEvents()  # <- Forzar actualización UI
+  
+            
             self.dataEnhanced = self.data.copy()
             self.datatoEnhanced = self.data[y_start: y_end,x_start: x_end ]
             
             TestData, top, bot, lf, rt = utils.padding(self.datatoEnhanced)
-     
+
             QApplication.processEvents()
             self.layout.addWidget(self.progressbar)
             self.progressbar.setValue(0)

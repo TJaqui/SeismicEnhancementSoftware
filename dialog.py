@@ -114,7 +114,7 @@ class RangeDialog(QDialog):
 
 
 class RangeDialogEn3D(QDialog):
-    def __init__(self, parent=None, data=None):
+    def __init__(self, parent=None, data=None, ilines=None, xlines=None ):
         super().__init__(parent)
         self.setWindowTitle("Set Ranges")
         self.setFixedSize(450, 500)
@@ -130,22 +130,22 @@ class RangeDialogEn3D(QDialog):
 
         self.whole_cube_checkbox.stateChanged.connect(self.toggle_mode)
         self.section_checkbox.stateChanged.connect(self.toggle_mode)
-
         # Create range input fields
         self.x_from = QLineEdit("0")
-        self.x_to = QLineEdit(str(data.shape[2]) if data is not None else "500")
+        self.x_to = QLineEdit(str(data.shape[1]) if data is not None else "500")
         self.y_from = QLineEdit("0")
-        self.y_to = QLineEdit(str(data.shape[1]) if data is not None else "500")
-        self.iline = QLineEdit("0")
-        self.crossline_from = QLineEdit("0")
-        self.crossline_to = QLineEdit(str(data.shape[2]) if data is not None else "500")
+        self.y_to = QLineEdit(str(data.shape[0]) if data is not None else "500")
+        self.iline_from = QLineEdit(str(ilines[0]) if ilines is not None else "500")
+        self.iline_to = QLineEdit(str(ilines[-1]) if ilines is not None else "500")
+        self.crossline_from = QLineEdit(str(xlines[0]) if xlines is not None else "500")
+        self.crossline_to = QLineEdit(str(xlines[-1]) if xlines is not None else "500")
 
         layout = QVBoxLayout()
 
         # Mode selection
         layout.addWidget(self.whole_cube_checkbox)
         layout.addWidget(self.section_checkbox)
-
+       
         # Section inputs
         section_layout = QVBoxLayout()
 
@@ -167,8 +167,10 @@ class RangeDialogEn3D(QDialog):
 
         # Iline
         iline_layout = QHBoxLayout()
-        iline_layout.addWidget(QLabel("iline"))
-        iline_layout.addWidget(self.iline)
+        iline_layout.addWidget(QLabel("iline from"))
+        iline_layout.addWidget(self.iline_from)
+        iline_layout.addWidget(QLabel("-"))
+        iline_layout.addWidget(self.iline_to)
         section_layout.addLayout(iline_layout)
 
         # Crossline
@@ -194,10 +196,10 @@ class RangeDialogEn3D(QDialog):
         btn_layout.addWidget(ok_btn)
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
-
+       
         # Connect updates
         for box in [self.x_from, self.x_to, self.y_from, self.y_to,
-                    self.iline, self.crossline_from, self.crossline_to]:
+                    self.iline_from, self.iline_to, self.crossline_from, self.crossline_to]:
             box.textChanged.connect(self.update_plot)
 
         self.setLayout(layout)
@@ -209,7 +211,7 @@ class RangeDialogEn3D(QDialog):
         self.section_checkbox.setChecked(not is_whole)
 
         for widget in [self.x_from, self.x_to, self.y_from, self.y_to,
-                       self.iline, self.crossline_from, self.crossline_to]:
+                       self.iline_from,self.iline_to , self.crossline_from, self.crossline_to]:
             widget.setEnabled(not is_whole)
 
     def get_ranges(self):
@@ -219,7 +221,7 @@ class RangeDialogEn3D(QDialog):
             return "section", {
                 "x": (int(self.x_from.text()), int(self.x_to.text())),
                 "y": (int(self.y_from.text()), int(self.y_to.text())),
-                "iline": int(self.iline.text()),
+                "iline": (int(self.iline_from.text()), int(self.iline_to.text())),
                 "crossline": (int(self.crossline_from.text()), int(self.crossline_to.text()))
             }
 
@@ -233,16 +235,15 @@ class RangeDialogEn3D(QDialog):
 
             if mode == "whole":
                 # Just show a middle slice in one view for preview
-                middle = self.data.shape[0] // 2
-                self.canvas.ax.imshow(self.data[middle], cmap="gray")
+                #middle = self.data.shape[0] // 2
+                self.canvas.ax.imshow(self.data, cmap="gray")
             else:
                 x0, x1 = ranges["x"]
                 y0, y1 = ranges["y"]
-                iline = ranges["iline"]
                 # For simplicity show a 2D slice at iline
-                if 0 <= iline < self.data.shape[0]:
-                    cropped = self.data[iline, y0:y1, x0:x1]
-                    self.canvas.ax.imshow(cropped, cmap="gray")
+                
+                cropped = self.data[y0:y1, x0:x1]
+                self.canvas.ax.imshow(cropped, cmap="gray")
 
             self.canvas.draw()
         except Exception as e:
