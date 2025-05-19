@@ -4,12 +4,9 @@ import segyio
 import utils
 import time
 from PyQt5.QtGui import QColor
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon
-from PyQt5 import QtWidgets
+
 from PyQt5.uic import loadUi
 from finetuning import parallelTrain
-from matplotlib.figure import Figure
 from PyQt5.QtWidgets import QSizePolicy 
 from PyQt5.QtWidgets import QButtonGroup
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QVBoxLayout, QGraphicsDropShadowEffect, QCheckBox, QFrame, QProgressBar, QMessageBox, QLineEdit, QPushButton, QHBoxLayout, QLabel, QDialog
@@ -90,7 +87,7 @@ class MainWindow(QMainWindow):
         self.crossline.setVisible(False)       
 
         self.enhancedata.clicked.connect(self.enhanceData)
-        self.enhancedata_2.clicked.connect(self.enhanceData)
+        self.enhancedata_2.clicked.connect(self.enhanceData2)
         self.beforeenhancement.clicked.connect(self.showBeforeEnhancement)  
         self.adapttodata.clicked.connect(self.AdaptToData)  
         self.adapttodata_2.clicked.connect(self.AdaptToData)  
@@ -217,6 +214,7 @@ class MainWindow(QMainWindow):
             self.clineN.setMaximum(xlines[-1])
             self.data = self.file.iline[ilines[0]].T
             
+            self.iline.setChecked(True)
             datamin =  self.data.min()
             datamax = self.data.max()
             
@@ -229,12 +227,14 @@ class MainWindow(QMainWindow):
             self.canvas.ax.clear()
             
             self.colorGroup.button(1).setChecked(True)
+      
             self.ColorSelected(1)
             cmap = getattr(self, "Color", "gray")
             self.canvas.ax.imshow(self.data, cmap=cmap)
             self.canvas.draw()
-    def update_plot(self):
+            
 
+    def update_plot(self):
 
         # Get selected line type and number
         if self.iline.isChecked():
@@ -259,6 +259,7 @@ class MainWindow(QMainWindow):
         self.canvas.ax.imshow(self.data, cmap=cmap)
         self.canvas.draw()
         print("plot changed")
+
     def enhanceData(self):
         
         try:
@@ -266,6 +267,69 @@ class MainWindow(QMainWindow):
             dialog = RangeDialog(self, data=self.data)
             if dialog.exec_() == QDialog.Accepted:
                 x_start, x_end, y_start, y_end = dialog.get_ranges()
+            QApplication.processEvents()  # <- Forzar actualización UI
+            self.dataEnhanced = self.data.copy()
+            self.datatoEnhanced = self.data[y_start: y_end,x_start: x_end ]
+            
+            TestData, top, bot, lf, rt = utils.padding(self.datatoEnhanced)
+     
+            QApplication.processEvents()
+            self.layout.addWidget(self.progressbar)
+            self.progressbar.setValue(0)
+            TestData -= TestData.min()
+            TestData /= TestData.max()
+            self.progressbar.setValue(10)
+            time.sleep(0.01)
+            QApplication.processEvents()
+            self.progressbar.setValue(20)
+            patches = utils.patchDivision(TestData)
+            self.progressbar.setValue(40)
+            QApplication.processEvents()
+            time.sleep(0.01)
+            self.progressbar.setValue(60)
+     
+            self.layout.addWidget(self.canvas, stretch=1)
+            self.canvas.ax.clear()
+            time.sleep(0.01)
+            
+            self.datatoEnhanced = utils.seismicEnhancement(patches, TestData.shape)
+      
+            self.progressbar.setValue(70)
+            time.sleep(0.01)
+            self.progressbar.setValue(80)
+            time.sleep(0.01)
+            self.progressbar.setValue(90)
+            self.layout.removeWidget(self.progressbar)
+            self.progressbar.deleteLater()
+            QApplication.processEvents()
+            time.sleep(0.3)
+ 
+            self.dataEnhanced[ y_start: y_end, x_start: x_end ] = self.datatoEnhanced[top:self.datatoEnhanced.shape[0]-bot, lf:self.datatoEnhanced.shape[1]-rt]
+
+            cmap = getattr(self, "Color", "gray") 
+            self.canvas.ax.imshow(self.dataEnhanced, cmap=cmap)
+            self.canvas.draw()
+            
+            self.afterenhancement.setVisible(True)
+            
+            QApplication.processEvents()
+            
+        except Exception as e:
+            error_dialog = QMessageBox(self)
+            error_dialog.setWindowTitle("Enhancement Error")
+            error_dialog.setIcon(QMessageBox.Critical)
+            error_dialog.setText("An error occurred during data enhancement.")
+            error_dialog.setInformativeText(str(e))
+            error_dialog.setStandardButtons(QMessageBox.Ok)
+            error_dialog.exec_()
+    
+    def enhanceData2(self):
+        
+        try:
+            global x_start, x_end, y_start, y_end
+            dialog = RangeDialogEn3D(self, data=self.data)
+            if dialog.exec_() == QDialog.Accepted:
+                x_start = dialog.get_ranges()
             QApplication.processEvents()  # <- Forzar actualización UI
             self.dataEnhanced = self.data.copy()
             self.datatoEnhanced = self.data[y_start: y_end,x_start: x_end ]

@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QButtonGroup
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QVBoxLayout, QGraphicsDropShadowEffect, QCheckBox, QFrame, QProgressBar, QMessageBox, QLineEdit, QPushButton, QHBoxLayout, QLabel, QDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-
+from matplotlib.widgets import RectangleSelector
 
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None):
@@ -110,7 +110,145 @@ class RangeDialog(QDialog):
         except Exception as e:
             # Ignore invalid input temporarily
             pass
-from matplotlib.widgets import RectangleSelector
+
+
+
+class RangeDialogEn3D(QDialog):
+    def __init__(self, parent=None, data=None):
+        super().__init__(parent)
+        self.setWindowTitle("Set Ranges")
+        self.setFixedSize(450, 500)
+
+        self.data = data.copy() if data is not None else None
+        self.canvas = MplCanvas(self)
+
+        self.whole_cube_checkbox = QCheckBox("Whole 3D Cube")
+        self.section_checkbox = QCheckBox("Section of Cube")
+
+        self.whole_cube_checkbox.setChecked(True)
+        self.section_checkbox.setChecked(False)
+
+        self.whole_cube_checkbox.stateChanged.connect(self.toggle_mode)
+        self.section_checkbox.stateChanged.connect(self.toggle_mode)
+
+        # Create range input fields
+        self.x_from = QLineEdit("0")
+        self.x_to = QLineEdit(str(data.shape[2]) if data is not None else "500")
+        self.y_from = QLineEdit("0")
+        self.y_to = QLineEdit(str(data.shape[1]) if data is not None else "500")
+        self.iline = QLineEdit("0")
+        self.crossline_from = QLineEdit("0")
+        self.crossline_to = QLineEdit(str(data.shape[2]) if data is not None else "500")
+
+        layout = QVBoxLayout()
+
+        # Mode selection
+        layout.addWidget(self.whole_cube_checkbox)
+        layout.addWidget(self.section_checkbox)
+
+        # Section inputs
+        section_layout = QVBoxLayout()
+
+        # X Range
+        x_layout = QHBoxLayout()
+        x_layout.addWidget(QLabel("x from"))
+        x_layout.addWidget(self.x_from)
+        x_layout.addWidget(QLabel("-"))
+        x_layout.addWidget(self.x_to)
+        section_layout.addLayout(x_layout)
+
+        # Y Range
+        y_layout = QHBoxLayout()
+        y_layout.addWidget(QLabel("y from"))
+        y_layout.addWidget(self.y_from)
+        y_layout.addWidget(QLabel("-"))
+        y_layout.addWidget(self.y_to)
+        section_layout.addLayout(y_layout)
+
+        # Iline
+        iline_layout = QHBoxLayout()
+        iline_layout.addWidget(QLabel("iline"))
+        iline_layout.addWidget(self.iline)
+        section_layout.addLayout(iline_layout)
+
+        # Crossline
+        cl_layout = QHBoxLayout()
+        cl_layout.addWidget(QLabel("crossline from"))
+        cl_layout.addWidget(self.crossline_from)
+        cl_layout.addWidget(QLabel("-"))
+        cl_layout.addWidget(self.crossline_to)
+        section_layout.addLayout(cl_layout)
+
+        layout.addLayout(section_layout)
+
+        # Canvas preview
+        layout.addWidget(self.canvas)
+
+        # Buttons
+        btn_layout = QHBoxLayout()
+        ok_btn = QPushButton("ok")
+        cancel_btn = QPushButton("cancel")
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
+        btn_layout.addStretch()
+        btn_layout.addWidget(ok_btn)
+        btn_layout.addWidget(cancel_btn)
+        layout.addLayout(btn_layout)
+
+        # Connect updates
+        for box in [self.x_from, self.x_to, self.y_from, self.y_to,
+                    self.iline, self.crossline_from, self.crossline_to]:
+            box.textChanged.connect(self.update_plot)
+
+        self.setLayout(layout)
+        self.toggle_mode()
+        self.update_plot()
+
+    def toggle_mode(self):
+        is_whole = self.whole_cube_checkbox.isChecked()
+        self.section_checkbox.setChecked(not is_whole)
+
+        for widget in [self.x_from, self.x_to, self.y_from, self.y_to,
+                       self.iline, self.crossline_from, self.crossline_to]:
+            widget.setEnabled(not is_whole)
+
+    def get_ranges(self):
+        if self.whole_cube_checkbox.isChecked():
+            return "whole", None
+        else:
+            return "section", {
+                "x": (int(self.x_from.text()), int(self.x_to.text())),
+                "y": (int(self.y_from.text()), int(self.y_to.text())),
+                "iline": int(self.iline.text()),
+                "crossline": (int(self.crossline_from.text()), int(self.crossline_to.text()))
+            }
+
+    def update_plot(self):
+        try:
+            if self.data is None:
+                return
+
+            mode, ranges = self.get_ranges()
+            self.canvas.ax.clear()
+
+            if mode == "whole":
+                # Just show a middle slice in one view for preview
+                middle = self.data.shape[0] // 2
+                self.canvas.ax.imshow(self.data[middle], cmap="gray")
+            else:
+                x0, x1 = ranges["x"]
+                y0, y1 = ranges["y"]
+                iline = ranges["iline"]
+                # For simplicity show a 2D slice at iline
+                if 0 <= iline < self.data.shape[0]:
+                    cropped = self.data[iline, y0:y1, x0:x1]
+                    self.canvas.ax.imshow(cropped, cmap="gray")
+
+            self.canvas.draw()
+        except Exception as e:
+            pass  # Invalid input is ignored for now
+
+
 
 class RangeDialogAd(QDialog):
     def __init__(self, parent=None, data=None):
