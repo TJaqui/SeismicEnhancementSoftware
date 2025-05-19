@@ -354,6 +354,13 @@ class MainWindow(QMainWindow):
         colors = ["seismic", "gray", "wiggle"]
         self.Color = colors[id]
         print("Color seleccionado:", self.Color)
+        self.canvas.ax.clear()
+        if self.afterenhancement.isVisible() and self.dataEnhanced is not None:
+            self.canvas.ax.imshow(self.dataEnhanced, cmap=self.Color)
+        elif self.data is not None:
+            self.canvas.ax.imshow(self.data, cmap=self.Color)
+        self.canvas.draw()
+
 
 
     def browsefiles(self):

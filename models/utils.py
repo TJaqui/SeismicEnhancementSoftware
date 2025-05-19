@@ -7,7 +7,11 @@ import torch.nn as nn
 #import config
 from torchvision.utils import save_image
 from scipy.stats import truncnorm
-device = torch.device('cpu')
+
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+id_device = 0
+device = f"cuda:{id_device}" if torch.cuda.is_available() else "cpu"
+
 
 # Print losses occasionally and print to tensorboard
 def plot_to_tensorboard(
@@ -57,7 +61,7 @@ def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
 
 def load_checkpoint(checkpoint_file, model, optimizer, lr):
     print("=> Loading checkpoint")
-    checkpoint = torch.load(checkpoint_file, map_location="cuda")
+    checkpoint = torch.load(checkpoint_file, map_location= device)
     model.load_state_dict(checkpoint["state_dict"])
     optimizer.load_state_dict(checkpoint["optimizer"])
 
