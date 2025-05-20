@@ -472,6 +472,7 @@ class HelpDialog(QDialog):
         link_label = QLabel(
             '<a href="https://github.com/TJaqui/SeismicEnhancementSoftware/wiki">Visit our repository</a>'
         )
+        link_label.setOpenExternalLinks(True)
         link_label.setWordWrap(True)
         link_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(link_label)
