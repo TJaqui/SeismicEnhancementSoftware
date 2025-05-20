@@ -132,6 +132,12 @@ class MainWindow(QMainWindow):
         colors = ["seismic", "gray", "wiggle"]
         self.Color = colors[id]
         print("Color seleccionado:", self.Color)
+        self.canvas.ax.clear()
+        if self.afterenhancement.isVisible() and self.dataEnhanced is not None:
+            self.canvas.ax.imshow(self.dataEnhanced, cmap=self.Color)
+        elif self.data is not None:
+            self.canvas.ax.imshow(self.data, cmap=self.Color)
+        self.canvas.draw()
 
     def Sectionic(self):
         self.icGroup = QButtonGroup(self)
@@ -283,7 +289,7 @@ class MainWindow(QMainWindow):
         
         try:
             global x_start, x_end, y_start, y_end
-            dialog = RangeDialog(self, data=self.data, ilines=self.ilines, xlines=self.xlines)
+            dialog = RangeDialog(self, data=self.data)
             if dialog.exec_() == QDialog.Accepted:
                 x_start, x_end, y_start, y_end = dialog.get_ranges()
             QApplication.processEvents()  # <- Forzar actualización UI
@@ -347,7 +353,7 @@ class MainWindow(QMainWindow):
         try:
             global x_start, x_end, y_start, y_end
             
-            dialog = RangeDialogEn3D(self, data=self.data)
+            dialog = RangeDialogEn3D(self, data=self.data, ilines=self.ilines, xlines=self.xlines)
             if dialog.exec_() == QDialog.Accepted:
                 x_start = dialog.get_ranges()
 
