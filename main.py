@@ -265,7 +265,7 @@ class MainWindow(QMainWindow):
 
             self.clineN.setMinimum(self.xlines[0])
             self.clineN.setMaximum(self.xlines[-1])
-            self.data = self.file
+            self.data = self.file.iline[self.ilines[0]].T
             
             self.iline.setChecked(True)
             datamin =  self.data.min()
@@ -278,15 +278,12 @@ class MainWindow(QMainWindow):
             self.layout.setContentsMargins(0, 30, 0, 0)
             self.canvas.lower() 
             self.canvas.ax.clear()
-            print("good")
             self.colorGroup2.button(1).setChecked(True)
-            print("good2")
+
             self.ColorSelected2(1)
-            print("sssssss")
             cmap = getattr(self, "Color2", "gray")
-            print("sss")
-            print("it worked",cmap)
-            self.canvas.ax.imshow(self.data.iline[self.ilines[0]].T, cmap="gray")
+
+            self.canvas.ax.imshow(self.data, cmap="gray")
             self.canvas.draw()
         
             
