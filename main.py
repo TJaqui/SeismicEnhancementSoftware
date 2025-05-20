@@ -9,7 +9,7 @@ from PyQt5.uic import loadUi
 from finetuning import parallelTrain
 from PyQt5.QtWidgets import QSizePolicy 
 from PyQt5.QtWidgets import QButtonGroup
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QVBoxLayout, QGraphicsDropShadowEffect, QCheckBox, QFrame, QProgressBar, QMessageBox, QLineEdit, QPushButton, QHBoxLayout, QLabel, QDialog
+from PyQt5.QtWidgets import QMainWindow, QAction, QGraphicsDropShadowEffect, QProgressBar
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from dialog import *
 
@@ -34,6 +34,7 @@ class MainWindow(QMainWindow):
         self.file = None
         self.ilines = None
         self.xlines = None
+        self.setWindowIcon(QIcon("icons/logo.png"))
 
         self.topBar.setVisible(True)
         shadow = QGraphicsDropShadowEffect(self)
@@ -44,6 +45,22 @@ class MainWindow(QMainWindow):
         self.topBar.setGraphicsEffect(shadow)
         
         self.leftBar.setVisible(False)
+
+
+
+        menubar = self.menuBar()
+        about_menu = menubar.addMenu("About")
+
+        # Create About action
+        self.actionAbout = QAction("About", self)
+        self.actionAbout.triggered.connect(self.about)
+        about_menu.addAction(self.actionAbout)
+        help_menu = menubar.addMenu("Help")
+
+        # Create About action
+        self.actionHelp = QAction("Help", self)
+        self.actionHelp.triggered.connect(self.help)
+        help_menu.addAction(self.actionHelp)
 
         # Remove fixed size so it resizes dynamically
         # self.canvas.setFixedSize(900, 500)
@@ -432,12 +449,25 @@ class MainWindow(QMainWindow):
                     error_dialog.setInformativeText(str(e))
                     error_dialog.setStandardButtons(QMessageBox.Ok)
                     error_dialog.exec_()
+    
+    # Menu bar functions
+    def about(self):
+        dialog = AboutDialog(self)
+        dialog.exec_() 
+    def help(self):
+        dialog = HelpDialog(self)
+        dialog.exec_() 
+            
+
     def saveData(self):
         dname = QFileDialog.getExistingDirectory(self, 'Open file', 'C:/')
         utils.save2dData(self.dataEnhanced,fname, dname, datamin, datamax)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    
+    app.setWindowIcon(QIcon("logo.png"))
     mainwindow = MainWindow()
+    mainwindow.setWindowTitle("NED")
     mainwindow.show()
     sys.exit(app.exec_())

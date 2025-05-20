@@ -15,6 +15,9 @@ from PyQt5.QtWidgets import QButtonGroup
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QVBoxLayout, QGraphicsDropShadowEffect, QCheckBox, QFrame, QProgressBar, QMessageBox, QLineEdit, QPushButton, QHBoxLayout, QLabel, QDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.widgets import RectangleSelector
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QHBoxLayout
+from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtCore import Qt
 
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None):
@@ -405,3 +408,78 @@ class DialogDim(QDialog):
             return True, False
         if self.d2.isChecked():
             return False, True
+
+
+class AboutDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("About")
+        self.setFixedSize(400, 300)
+
+        layout = QVBoxLayout()
+
+        # Project description
+        title = QLabel("NED")
+        title.setFont(QFont("Arial", 16, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        desc = QLabel("This project was developed by the following contributors,\n"
+                      "In aims to provide useful tools for data visualization and seismic processing.")
+        desc.setWordWrap(True)
+        desc.setAlignment(Qt.AlignCenter)
+        layout.addWidget(desc)
+
+        # Contributors/icons
+        contributors_layout = QHBoxLayout()
+        icon_paths = ["icons/Logos_collaborators.png"]  # Update these to actual file paths
+
+        for icon_path in icon_paths:
+            try:
+                pixmap = QPixmap(icon_path).scaled(300, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                icon_label = QLabel()
+                icon_label.setPixmap(pixmap)
+                icon_label.setAlignment(Qt.AlignCenter)
+                contributors_layout.addWidget(icon_label)
+            except Exception as e:
+                print(f"Failed to load icon {icon_path}: {e}")
+
+        layout.addLayout(contributors_layout)
+
+        # Footer
+        footer = QLabel("© 2025 HDSP")
+        footer.setAlignment(Qt.AlignCenter)
+        footer.setFont(QFont("Arial", 10))
+        layout.addWidget(footer)
+
+        self.setLayout(layout)
+
+class HelpDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Help")
+        self.setFixedSize(400, 300)
+
+        layout = QVBoxLayout()
+
+        # Project description
+        desc = QLabel("To find information about the software,\n"
+                      "please, consult the wiki.")
+
+        desc.setWordWrap(True)
+        desc.setAlignment(Qt.AlignCenter)
+        layout.addWidget(desc)
+        link_label = QLabel(
+            '<a href="https://github.com/TJaqui/SeismicEnhancementSoftware/wiki">Visit our repository</a>'
+        )
+        link_label.setWordWrap(True)
+        link_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(link_label)
+        
+        # Footer
+        footer = QLabel("© 2025 HDSP")
+        footer.setAlignment(Qt.AlignCenter)
+        footer.setFont(QFont("Arial", 10))
+        layout.addWidget(footer)
+
+        self.setLayout(layout)
