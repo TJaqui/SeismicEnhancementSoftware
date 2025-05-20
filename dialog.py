@@ -135,9 +135,9 @@ class RangeDialogEn3D(QDialog):
         self.section_checkbox.stateChanged.connect(self.toggle_mode)
         # Create range input fields
         self.x_from = QLineEdit("0")
-        self.x_to = QLineEdit(str(data.shape[1]) if data is not None else "500")
+        self.x_to = QLineEdit(str(data.iline[ilines[0]].T.shape[1]) if data is not None else "500")
         self.y_from = QLineEdit("0")
-        self.y_to = QLineEdit(str(data.shape[0]) if data is not None else "500")
+        self.y_to = QLineEdit(str(data.iline[ilines[0]].T.shape[0]) if data is not None else "500")
         self.iline_from = QLineEdit(str(ilines[0]) if ilines is not None else "500")
         self.iline_to = QLineEdit(str(ilines[-1]) if ilines is not None else "500")
         self.crossline_from = QLineEdit(str(xlines[0]) if xlines is not None else "500")
@@ -472,6 +472,7 @@ class HelpDialog(QDialog):
         link_label = QLabel(
             '<a href="https://github.com/TJaqui/SeismicEnhancementSoftware/wiki">Visit our repository</a>'
         )
+        link_label.setOpenExternalLinks(True)
         link_label.setWordWrap(True)
         link_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(link_label)

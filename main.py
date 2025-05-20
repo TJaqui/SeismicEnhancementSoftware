@@ -116,6 +116,7 @@ class MainWindow(QMainWindow):
         self.clineN.valueChanged.connect(self.update_plot)
         self.labeldata.setStyleSheet("font-weight: bold;")
         self.ColorButtons()
+        self.ColorButtons2()
         self.Sectionic()
 
     def ColorButtons(self):
@@ -137,6 +138,27 @@ class MainWindow(QMainWindow):
             self.canvas.ax.imshow(self.dataEnhanced, cmap=self.Color)
         elif self.data is not None:
             self.canvas.ax.imshow(self.data, cmap=self.Color)
+        self.canvas.draw()
+
+    def ColorButtons2(self):
+        self.colorGroup2 = QButtonGroup(self)
+        self.colorGroup2.setExclusive(True)
+
+        self.colorGroup2.addButton(self.Seismic_2, 0)  # Seismic
+        self.colorGroup2.addButton(self.Gray_2, 1)  # Gray
+        self.colorGroup2.addButton(self.Wiggle_2, 2)  # Wiggle
+        
+        self.colorGroup2.buttonClicked[int].connect(self.ColorSelected2)
+
+    def ColorSelected2(self, id):
+        colors = ["seismic", "gray", "wiggle"]
+        self.Color2 = colors[id]
+        print("Color seleccionado:", self.Color2)
+        self.canvas.ax.clear()
+        if self.afterenhancement.isVisible() and self.dataEnhanced is not None:
+            self.canvas.ax.imshow(self.dataEnhanced, cmap=self.Color2)
+        elif self.data is not None:
+            self.canvas.ax.imshow(self.data, cmap=self.Color2)
         self.canvas.draw()
 
     def Sectionic(self):
@@ -186,6 +208,12 @@ class MainWindow(QMainWindow):
                 self.clineN.setVisible(True) 
                 self.iline.setVisible(True) 
                 self.crossline.setVisible(True)   
+                self.Seismic_2.setCheckable(True)
+                self.Gray_2.setCheckable(True)
+                self.Wiggle_2.setCheckable(True)
+                self.Gray_2.setCheckable(True)
+                
+            
                 self.plotsgy3d(fname)    
 
             self.leftBar.setVisible(True)
@@ -237,7 +265,7 @@ class MainWindow(QMainWindow):
 
             self.clineN.setMinimum(self.xlines[0])
             self.clineN.setMaximum(self.xlines[-1])
-            self.data = self.file.iline[self.ilines[0]].T
+            self.data = self.file
             
             self.iline.setChecked(True)
             datamin =  self.data.min()
@@ -250,13 +278,17 @@ class MainWindow(QMainWindow):
             self.layout.setContentsMargins(0, 30, 0, 0)
             self.canvas.lower() 
             self.canvas.ax.clear()
-            
-            self.colorGroup.button(1).setChecked(True)
-      
-            self.ColorSelected(1)
-            cmap = getattr(self, "Color", "gray")
-            self.canvas.ax.imshow(self.data, cmap=cmap)
+            print("good")
+            self.colorGroup2.button(1).setChecked(True)
+            print("good2")
+            self.ColorSelected2(1)
+            print("sssssss")
+            cmap = getattr(self, "Color2", "gray")
+            print("sss")
+            print("it worked",cmap)
+            self.canvas.ax.imshow(self.data.iline[self.ilines[0]].T, cmap="gray")
             self.canvas.draw()
+        
             
 
     def update_plot(self):
@@ -280,10 +312,10 @@ class MainWindow(QMainWindow):
 
         # Redraw
         self.canvas.ax.clear()
-        cmap = getattr(self, "Color", "gray")
+        cmap = getattr(self, "Color2", "gray")
         self.canvas.ax.imshow(self.data, cmap=cmap)
         self.canvas.draw()
-        print("plot changed")
+       
 
     def enhanceData(self):
         
