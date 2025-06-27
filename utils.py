@@ -187,10 +187,57 @@ def seismicEnhancement(data,shape,step=16, progress_callback=None):
     print(recov_blcks.shape)
     Urec  = recov_blcks.squeeze().permute(1,2,0).cpu().numpy()
     Urec = Urec.reshape(np.prod(blksz), -1)
-    #start = timeit.default_timer()
     imgd_median = array.combine_blocks(Urec.reshape(blksz + (-1,)), shape, stpsz, np.median)
-    #print("creating image from patching, time is:",
-    #            timeit.default_timer() - start)
+    return imgd_median
+
+def seismicEnhancement3D(data,shape,step=16, progress_callback=None):
+    """
+    It performs seismic data enhancement using a pre-trained model.
+    The function processes the input data by dividing it into patches, passing each patch through the model 
+    for denoising/enhancement, and then concatenates the enhanced patches.
+
+    Parameters
+    ----------
+    data : dataset-like
+        The input data containing seismic images or signals to be enhanced. This data is expected to be compatible 
+        with PyTorch's DataLoader.
+    shape : tuple
+        A tuple specifying the target shape of the enhanced seismic data.
+    step : int, optional
+        An integer specifying the step size for patch extraction, which determines the overlap between patches.
+        By default this parameter is set to 16.
+
+    Return
+    ------
+    recov_blcks : torch.Tensor
+        A PyTorch tensor containing the enhanced seismic blocks obtained by concatenating the model's output from all batches.
+    """
+    blksz = (128,128)
+    stpsz = (step,step)
+    model = AttU_Net(img_ch=1,output_ch=1).to(device)
+    model.eval()
+    model.load_state_dict(torch.load('checkpoints/att_u_fine.pt', weights_only=False,map_location=device))
+    data_loader = torch.utils.data.DataLoader(data, batch_size=5)
+    denoised_tensor_list = []
+    total = len(data_loader)
+
+    total_batches = len(data_loader)
+    for i, batch in enumerate(tqdm(data_loader, desc="Enhancing")):
+        with torch.no_grad():
+            denoised_batch = model(batch.to(device).float())
+            denoised_tensor_list.append(denoised_batch.cpu())
+
+        if progress_callback:
+            percent = int((i + 1) / total * 100)
+            progress_callback(percent, f"Enhancing... {percent}%")
+
+    recov_blcks = torch.cat(denoised_tensor_list, dim=0)
+
+    del denoised_tensor_list
+    print(recov_blcks.shape)
+    Urec  = recov_blcks.squeeze().permute(1,2,0).cpu().numpy()
+    Urec = Urec.reshape(np.prod(blksz), -1)
+    imgd_median = array.combine_blocks(Urec.reshape(blksz + (-1,)), shape, stpsz, np.median)
     return imgd_median
 
 def save2dData(data, data_name, path, dmin, dmax):

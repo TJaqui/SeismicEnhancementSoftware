@@ -1,14 +1,15 @@
 from PyQt5.QtWidgets import (
     QFrame, QVBoxLayout, QPushButton, QLabel,
-    QButtonGroup, QWidget, QToolButton, QSizePolicy
+    QButtonGroup, QWidget, QToolButton, QSizePolicy, QSpinBox
 )
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QIcon
 
-
 class CollapsibleSection(QWidget):
     def __init__(self, title, buttons):
         super().__init__()
+ 
+       
         self.toggle_button = QToolButton()
         self.toggle_button.setText(title)
         self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
@@ -65,6 +66,9 @@ class CollapsibleSection(QWidget):
 class SideBar(QFrame):
     def __init__(self, parent=None):
         super(SideBar, self).__init__(parent)
+
+
+
         self.setObjectName("leftBar")
         self.setFixedWidth(200)
         self.setStyleSheet("background-color: #F9FAFB;")
@@ -72,7 +76,22 @@ class SideBar(QFrame):
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 20, 12, 20)
         layout.setSpacing(12)
-
+        
+        self.iline_spin = QSpinBox()
+        self.xline_spin = QSpinBox()
+        for spin in [self.iline_spin, self.xline_spin]:
+            spin.setMinimum(0)
+            spin.setMaximum(0)
+            spin.setSingleStep(1)
+            spin.setStyleSheet("""
+                QSpinBox {
+                    background-color: #FFFFFF;
+                    border: 1px solid #CCCCCC;
+                    border-radius: 6px;
+                    padding: 4px;
+                    font-size: 13px;
+                }
+            """)
         # --- Data ---
         self.view_original_btn = self._create_menu_button("Original")
         self.view_enhanced_btn = self._create_menu_button("Enhanced")
@@ -98,7 +117,10 @@ class SideBar(QFrame):
         self.ic_group.addButton(self.crossline_btn, 1)
 
         self.section_section = CollapsibleSection("Section", [
-            self.inline_btn, self.crossline_btn
+            self.inline_btn,
+            self.iline_spin,
+            self.crossline_btn,
+            self.xline_spin, 
         ])
         self.section_section.setVisible(False)
         layout.addWidget(self.section_section)
@@ -143,3 +165,7 @@ class SideBar(QFrame):
 
     def hide_view_buttons(self):
         self.data_section.setVisible(False)
+    
+    def set_ixline_limits(self, iline_min, iline_max, xline_min, xline_max):
+        self.iline_spin.setRange(iline_min, iline_max)
+        self.xline_spin.setRange(xline_min, xline_max)

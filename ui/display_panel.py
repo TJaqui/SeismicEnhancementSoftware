@@ -30,19 +30,40 @@ class DisplayPanel(QWidget):
         self.canvas.figure.tight_layout()
         self.canvas.draw()
 
+    def update_plot(self):
+        if self.sidebar.inline_btn.isChecked():
+            line_num = self.sidebar.iline_spin.value()
+            self.data = self.file.iline[line_num].T
+        elif self.sidebar.crossline_btn.isChecked():
+            line_num = self.sidebar.xline_spin.value()
+            self.data = self.file.xline[line_num].T
+        else:
+            return
+
     def load_file(self, path, mode):
         try:
             print(f"📂 Loading file: {path} as {mode}")
             self.mode = mode
             if mode == "2D":
+                global datamin, datamax
+                self.file = segyio.open(path,ignore_geometry=True)
+                self.data = self.file.trace.raw[:]
+                datamin =  self.data.min()
+                datamax = self.data.max()
+                
+                self.data -= self.data.min()
+                self.data /= self.data.max()
+                '''
                 with segyio.open(path, "r", ignore_geometry=True) as f:
                     data = np.array(f.trace.raw[:])
-                    print(f"✅ Shape of 2D data: {data.shape}")
-                    self.data = data                    
-                    self.dataEnhanced = None
-                    self.show_seismic(data, cmap="gray")
+                '''
+                print(f"✅ Shape of 2D data: {self.data.shape}")
+                                   
+                self.dataEnhanced = None
+                self.show_seismic(self.data, cmap="gray")
             elif mode == "3D":
-                with segyio.open(path, "r", ignore_geometry=True) as f:
+                '''
+                with segyio.open(path, "r") as f:
                     f.mmap()
                     cube = segyio.tools.cube(f)
                     print(f"✅ Shape of 3D cube: {cube.shape}")
@@ -51,6 +72,20 @@ class DisplayPanel(QWidget):
                     self.data = data                    
                     self.dataEnhanced = None
                     self.show_seismic(data, cmap="gray")
+                '''
+                #global datamin, datamax
+
+                self.file = segyio.open(path)
+                self.ilines = list(self.file.ilines)
+                self.xlines = list(self.file.xlines)
+
+                main_window = find_main_window(self)
+                if main_window and hasattr(main_window, "sidebar"):
+                    main_window.sidebar.set_ixline_limits(self.ilines[0],self.ilines[-1],self.xlines[0],self.xlines[-1])
+                    
+                self.data = self.file.iline[self.ilines[0]]
+                self.show_seismic(self.data, cmap="gray")
+
         except Exception as e:
             print(f"❌ Failed to load seismic data: {e}")
             self.canvas.draw_empty()
@@ -129,11 +164,10 @@ class DisplayPanel(QWidget):
     def _show_wiggle(self, data):
         self.canvas.ax.clear()
         for i in range(data.shape[1]):
-            trace = data[:, i]
+            trace = data.T[:, i]
             norm_trace = trace / np.max(np.abs(trace))
-            self.canvas.ax.plot(norm_trace + i, range(len(trace)), color="black", linewidth=0.5)
+            self.canvas.ax.plot(norm_trace + i, range(len(trace)), color="black", linewidth=0.2)
         self.canvas.ax.invert_yaxis()
-        self.canvas.ax.set_title("Wiggle Plot")
         self.canvas.draw()
 
     def set_visualization_mode(self, mode):
