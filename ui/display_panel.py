@@ -20,7 +20,7 @@ class DisplayPanel(QWidget):
         self.canvas = MplCanvas(self)
         layout.addWidget(self.canvas)
         self.setLayout(layout)
-
+        
     def show_seismic(self, data, cmap="gray"):
         self.canvas.ax.clear()
         self.canvas.ax.imshow(data.T, cmap=cmap, aspect='equal', origin='upper')
@@ -33,13 +33,15 @@ class DisplayPanel(QWidget):
     def update_plot(self):
         if self.sidebar.inline_btn.isChecked():
             line_num = self.sidebar.iline_spin.value()
-            self.data = self.file.iline[line_num].T
+            self.data = self.file.iline[line_num]
+            self.show_seismic(self.data, cmap="gray")
         elif self.sidebar.crossline_btn.isChecked():
             line_num = self.sidebar.xline_spin.value()
-            self.data = self.file.xline[line_num].T
+            self.data = self.file.xline[line_num]
+            self.show_seismic(self.data, cmap="gray")
         else:
             return
-
+    
     def load_file(self, path, mode):
         try:
             print(f"📂 Loading file: {path} as {mode}")

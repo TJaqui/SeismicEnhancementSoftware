@@ -41,6 +41,9 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.sidebar)
         content_layout.addWidget(self.displaypanel)
 
+        self.displaypanel.sidebar = self.sidebar
+        self.sidebar.iline_spin.valueChanged.connect(self.displaypanel.update_plot)
+        self.sidebar.xline_spin.valueChanged.connect(self.displaypanel.update_plot)
         # Finalizar layout principal
         main_layout.addLayout(content_layout)
         central_widget.setLayout(main_layout)
