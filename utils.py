@@ -139,7 +139,7 @@ def patchDivision(data, step=16):
     subblcks_corrupt = torch.from_numpy(subblcks_corrupt).unsqueeze(1)
     return subblcks_corrupt
 
-def seismicEnhancement(data,shape,step=16):
+def seismicEnhancement(data,shape,step=16, progress_callback=None):
     """
     It performs seismic data enhancement using a pre-trained model.
     The function processes the input data by dividing it into patches, passing each patch through the model 
@@ -168,12 +168,20 @@ def seismicEnhancement(data,shape,step=16):
     model.load_state_dict(torch.load('checkpoints/att_u_fine.pt', weights_only=False,map_location=device))
     data_loader = torch.utils.data.DataLoader(data, batch_size=5)
     denoised_tensor_list = []
+    total = len(data_loader)
 
-    for batch in tqdm(data_loader):
+    total_batches = len(data_loader)
+    for i, batch in enumerate(tqdm(data_loader, desc="Enhancing")):
         with torch.no_grad():
             denoised_batch = model(batch.to(device).float())
             denoised_tensor_list.append(denoised_batch.cpu())
+
+        if progress_callback:
+            percent = int((i + 1) / total * 100)
+            progress_callback(percent, f"Enhancing... {percent}%")
+
     recov_blcks = torch.cat(denoised_tensor_list, dim=0)
+
     
     del denoised_tensor_list
     print(recov_blcks.shape)
