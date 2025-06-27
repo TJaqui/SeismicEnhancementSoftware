@@ -22,12 +22,24 @@ class DisplayPanel(QWidget):
         self.setLayout(layout)
         
     def show_seismic(self, data, cmap="gray"):
+
+        #try:
+        #    xlim = self.canvas.ax.get_xlim()
+        #    ylim = self.canvas.ax.get_ylim()
+        #except Exception:
+        #   xlim = ylim = None
+
         self.canvas.ax.clear()
         self.canvas.ax.imshow(data.T, cmap=cmap, aspect='equal', origin='upper')
         self.canvas.ax.tick_params(axis='both', colors='black')
         self.canvas.ax.spines['top'].set_visible(False)
         self.canvas.ax.spines['right'].set_visible(False)
         self.canvas.figure.tight_layout()
+
+        #if xlim and ylim:
+        #    self.canvas.ax.set_xlim(xlim)
+        #    self.canvas.ax.set_ylim(ylim)
+
         self.canvas.draw()
 
     def update_plot(self):
@@ -164,21 +176,39 @@ class DisplayPanel(QWidget):
         error_dialog.exec_()
 
     def _show_wiggle(self, data):
+
+        #try:
+        #    xlim = self.canvas.ax.get_xlim()
+        #    ylim = self.canvas.ax.get_ylim()
+        #except Exception:
+        #    xlim = ylim = None
+    
         self.canvas.ax.clear()
         for i in range(data.shape[1]):
             trace = data.T[:, i]
             norm_trace = trace / np.max(np.abs(trace))
             self.canvas.ax.plot(norm_trace + i, range(len(trace)), color="black", linewidth=0.2)
         self.canvas.ax.invert_yaxis()
+
+        #if xlim and ylim:
+        #    self.canvas.ax.set_xlim(xlim)
+        #    self.canvas.ax.set_ylim(ylim)
+
         self.canvas.draw()
 
     def set_visualization_mode(self, mode):
-
         if not hasattr(self, "data") and not hasattr(self, "dataEnhanced"):
             print("No hay datos cargados aún.")
             return
 
-        data = self.dataEnhanced if self.dataEnhanced is not None else self.data
+        # Asegurar que al menos uno exista antes de usar
+        if hasattr(self, "dataEnhanced") and self.dataEnhanced is not None:
+            data = self.dataEnhanced
+        elif hasattr(self, "data") and self.data is not None:
+            data = self.data
+        else:
+            print("No hay datos válidos para mostrar.")
+            return
 
         if mode == "seismic":
             self.show_seismic(data, cmap="seismic")
@@ -197,15 +227,17 @@ def find_main_window(widget):
         widget = widget.parent()
     return None
 
-
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None):
-        fig = Figure(facecolor='white')
-        self.ax = fig.add_subplot(111)
+        self.fig = Figure(facecolor='white')
+        self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor('white')
-        super(MplCanvas, self).__init__(fig)
+        super(MplCanvas, self).__init__(self.fig)
         self.setParent(parent)
+
         self.draw_empty()
+
+        self.mpl_connect("scroll_event", self._on_scroll)
 
     def draw_empty(self):
         self.ax.clear()
@@ -222,4 +254,28 @@ class MplCanvas(FigureCanvas):
         self.ax.set_xticks([])
         self.ax.set_yticks([])
         self.ax.axis('off')
+        self.draw()
+
+    def _on_scroll(self, event):
+        base_scale = 1.2
+        xdata, ydata = event.xdata, event.ydata
+        if xdata is None or ydata is None:
+            return
+
+        scale_factor = 1 / base_scale if event.button == 'up' else base_scale
+
+        cur_xlim = self.ax.get_xlim()
+        cur_ylim = self.ax.get_ylim()
+
+        new_xlim = [
+            xdata - (xdata - cur_xlim[0]) * scale_factor,
+            xdata + (cur_xlim[1] - xdata) * scale_factor
+        ]
+        new_ylim = [
+            ydata - (ydata - cur_ylim[0]) * scale_factor,
+            ydata + (cur_ylim[1] - ydata) * scale_factor
+        ]
+
+        self.ax.set_xlim(new_xlim)
+        self.ax.set_ylim(new_ylim)
         self.draw()
