@@ -7,6 +7,7 @@ class RangeDialog(QDialog):
     def __init__(self, parent=None, data=None):
         super().__init__(parent)
         self.setWindowTitle("Set Ranges")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setFixedSize(420, 460)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
 

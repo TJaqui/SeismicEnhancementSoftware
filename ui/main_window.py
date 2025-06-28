@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from ui.dialogs.select_mode_dialog import SelectModeDialog
 from ui.dialogs.help_dialog import HelpDialog
 from ui.dialogs.about_dialog import AboutDialog
+from ui.dialogs.save_data_dialog import SaveDataDialog
 from ui.sidebar import SideBar
 from ui.toolbar import TopToolBar
 from ui.display_panel import DisplayPanel
@@ -58,61 +59,12 @@ class MainWindow(QMainWindow):
 
         self.toolbar.connect_buttons(
             self.handle_open,
-            self.displaypanel.save_data,
+            self._show_dialog_save_data,
             self.displaypanel.enhance_data,
-            self.displaypanel.adapt_to_data
+            self.displaypanel.adapt_to_data,
+            self._show_about,
+            self._show_help
         )
-
-        # Crear barra de menú
-        self._create_menubar()
-
-    def _create_menubar(self):
-        menubar = QMenuBar(self)
-        menubar.setStyleSheet("""
-            QMenuBar {
-                background-color: #F9FAFB;
-                font-size: 14px;
-            }
-            QMenuBar::item:selected {
-                background: #E6F7F5;
-            }
-            QMenu {
-                background-color: #FFFFFF;
-                color: #1E1E1E;
-                font-size: 14px;
-            }
-            QMenu::item:selected {
-                background-color: #2979FF;
-                color: white;
-            }
-        """)
-
-        file_menu = menubar.addMenu("File")
-
-        open_action = QAction("Open", self)
-        open_action.triggered.connect(self.handle_open)
-
-        save_action = QAction("Save file", self)
-        save_action.triggered.connect(self.displaypanel.save_data)
-
-        exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(self.close)
-
-        file_menu.addAction(open_action)
-        file_menu.addAction(save_action)
-        file_menu.addAction(exit_action)
-
-        about_menu = menubar.addMenu("About")
-        about_action = QAction("About", self)
-        about_action.triggered.connect(self._show_about)
-        about_menu.addAction(about_action)
-
-        help_menu = menubar.addMenu("Help")
-        help_action = QAction("Help", self)
-        help_action.triggered.connect(self._show_help)
-        help_menu.addAction(help_action)
-
-        self.setMenuBar(menubar)
 
     def change_colormap(self, id):
         if self.displaypanel.data is not None:
@@ -145,4 +97,22 @@ class MainWindow(QMainWindow):
 
     def _show_about(self):
         dialog = AboutDialog(self)
+        dialog.exec_()
+
+    def _show_dialog_save_data(self):
+        if not self.displaypanel or self.displaypanel.data is None:
+            return
+
+        data = self.displaypanel.data
+        dataEnhanced = self.displaypanel.dataEnhanced
+        data_name = self.displaypanel.file._filename 
+        mode = self.displaypanel.mode
+
+        dialog = SaveDataDialog(
+            data=data,
+            dataEnhanced=dataEnhanced,
+            data_name=data_name,
+            mode=mode,
+            parent=self
+        )
         dialog.exec_()

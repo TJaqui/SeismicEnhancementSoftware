@@ -8,7 +8,7 @@ class App(QStackedWidget):
     def __init__(self):
         super(App, self).__init__()
 
-        self.setWindowIcon(QIcon("resources/logo.png"))
+        self.setWindowIcon(QIcon("resources/icons/logo.ico"))
         self.setWindowTitle("NED")
         self.resize(1200, 800)
 

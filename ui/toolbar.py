@@ -3,7 +3,9 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, Qt
-
+from ui.dialogs.about_dialog import AboutDialog
+from ui.dialogs.help_dialog import HelpDialog
+from ui.dialogs.save_data_dialog import SaveDataDialog
 
 class DropDownMenuIcon(QWidget):
     def __init__(self, icon_path, title, options, callback):
@@ -123,6 +125,8 @@ class TopToolBar(QWidget):
         self.saveButton = self._create_button("resources/icons/save.png", "Save")
         self.enhanceButton = self._create_button("resources/icons/enhance.png", "Enhance")
         self.adaptButton = self._create_button("resources/icons/adapt.png", "Adapt")
+        self.aboutButton = self._create_button("resources/icons/about.png", "About")
+        self.helpButton = self._create_button("resources/icons/help.png", "Help")
 
         layout.addWidget(self.openButton)
         layout.addWidget(self.saveButton)
@@ -131,7 +135,7 @@ class TopToolBar(QWidget):
 
         self.visualizationMenu = DropDownMenuIcon(
             "resources/icons/visualization.png",
-            "Visualization",
+            "View",
             [
                 ("Seismic", "resources/icons/seismic.png"),
                 ("Gray", "resources/icons/gray.png"),
@@ -140,6 +144,9 @@ class TopToolBar(QWidget):
             self.handle_visualization
         )
         layout.addWidget(self.visualizationMenu)
+
+        layout.addWidget(self.aboutButton)
+        layout.addWidget(self.helpButton)
 
         self.visualization_buttons = self.visualizationMenu.buttons
         self.visualization_buttons["Seismic"].clicked.connect(lambda: self.set_visualization_mode("seismic"))
@@ -188,11 +195,26 @@ class TopToolBar(QWidget):
         container.button = button
         return container
 
-    def connect_buttons(self, on_open, on_save, on_enhance, on_adapt):
+    def connect_buttons(self, on_open, on_save, on_enhance, on_adapt, on_about, on_help):
         self.openButton.button.clicked.connect(on_open)
         self.saveButton.button.clicked.connect(on_save)
         self.enhanceButton.button.clicked.connect(on_enhance)
         self.adaptButton.button.clicked.connect(on_adapt)
+        self.aboutButton.button.clicked.connect(on_about)
+        self.helpButton.button.clicked.connect(on_help)
+
+    def _show_about(self):
+        dialog = AboutDialog(self)
+        dialog.exec_()
+
+    def _show_help(self):
+        dialog = HelpDialog(self)
+        dialog.exec_()
+
+    def _show_dialog_dave_data(self):
+        dialog = SaveDataDialog(self)
+        dialog.exec_()
+
 
     def handle_visualization(self, option):
         # Este método solo reenvía el texto al nombre correcto

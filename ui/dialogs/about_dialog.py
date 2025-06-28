@@ -6,6 +6,7 @@ class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("About")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setFixedSize(420, 360)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
 

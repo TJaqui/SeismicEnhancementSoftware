@@ -5,6 +5,7 @@ class SelectModeDialog(QDialog):
     def __init__(self, parent=None):
         super(SelectModeDialog, self).__init__(parent)
         self.setWindowTitle("Select data dimensions")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setFixedSize(320, 180)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
 

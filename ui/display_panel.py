@@ -10,6 +10,10 @@ from ui.dialogs.range_dialog import RangeDialogAd
 from ui.dialogs.progress_dialog import ProgressDialog
 from finetuning import parallelTrain
 
+class EnhancementCancelled(Exception):
+    """Raised when the enhancement process is cancelled by the user."""
+    pass
+
 class DisplayPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -58,6 +62,7 @@ class DisplayPanel(QWidget):
         try:
             print(f"📂 Loading file: {path} as {mode}")
             self.mode = mode
+            self.data_path = path
             if mode == "2D":
                 global datamin, datamax
                 self.file = segyio.open(path,ignore_geometry=True)
@@ -105,47 +110,60 @@ class DisplayPanel(QWidget):
             self.canvas.draw_empty()
 
     def enhance_data(self):
+        progress_dialog = None
         try:
             dialog = RangeDialog(self, data=self.data)
-            if dialog.exec_() == dialog.Accepted:
-                x_start, x_end, y_start, y_end = dialog.get_ranges()
+            if dialog.exec_() != dialog.Accepted:
+                return
 
-                progress_dialog = ProgressDialog("Enhancing Data", self)
-                progress_dialog.label.setText("Enhancing...")
-                progress_dialog.show()
-                QApplication.processEvents()
+            x_start, x_end, y_start, y_end = dialog.get_ranges()
 
-                self.dataEnhanced = self.data.copy()
-                datato_enhance = self.data[y_start:y_end, x_start:x_end]
+            progress_dialog = ProgressDialog("Enhancing Data", self)
+            progress_dialog.label.setText("Enhancing...")
+            progress_dialog.show()
+            QApplication.processEvents()
 
-                TestData, top, bot, lf, rt = utils.padding(datato_enhance)
-                TestData -= TestData.min()
-                TestData /= TestData.max()
-                patches = utils.patchDivision(TestData)
+            self.dataEnhanced = self.data.copy()
+            datato_enhance = self.data[y_start:y_end, x_start:x_end]
 
-                self.datatoEnhanced = utils.seismicEnhancement(
-                    patches,
-                    TestData.shape,
-                    progress_callback=progress_dialog.update_progress
-                )
+            TestData, top, bot, lf, rt = utils.padding(datato_enhance)
+            TestData -= TestData.min()
+            TestData /= TestData.max()
+            patches = utils.patchDivision(TestData)
 
-                self.dataEnhanced[y_start:y_end, x_start:x_end] = self.datatoEnhanced[
-                    top:self.datatoEnhanced.shape[0] - bot,
-                    lf:self.datatoEnhanced.shape[1] - rt
-                ]
+            def safe_update(value, msg=""):
+                if progress_dialog.is_cancelled():
+                    raise EnhancementCancelled()
+                progress_dialog.update_progress(value, msg)
 
-                self.show_seismic(self.dataEnhanced, cmap="gray")
-                progress_dialog.update_progress(100)
-                progress_dialog.accept()
+            self.datatoEnhanced = utils.seismicEnhancement(
+                patches,
+                TestData.shape,
+                progress_callback=safe_update
+            )
 
-                main_window = find_main_window(self)
-                if main_window and hasattr(main_window, "sidebar"):
-                    main_window.sidebar.show_view_buttons()
-                    main_window.sidebar.view_enhanced_btn.setChecked(True)
+            self.dataEnhanced[y_start:y_end, x_start:x_end] = self.datatoEnhanced[
+                top:self.datatoEnhanced.shape[0] - bot,
+                lf:self.datatoEnhanced.shape[1] - rt
+            ]
 
+            self.show_seismic(self.dataEnhanced, cmap="gray")
+            progress_dialog.update_progress(100)
+            progress_dialog.accept()
+
+            main_window = find_main_window(self)
+            if main_window and hasattr(main_window, "sidebar"):
+                main_window.sidebar.show_view_buttons()
+                main_window.sidebar.view_enhanced_btn.setChecked(True)
+
+        except EnhancementCancelled:
+            print("🚫 Enhancement cancelled by user.")
         except Exception as e:
             print(f"❌ Enhancement Error: {e}")
             self._show_error("Enhancement Error", str(e))
+        finally:
+            if progress_dialog and progress_dialog.isVisible():
+                progress_dialog.reject()
 
     def adapt_to_data(self):
         try:
@@ -158,14 +176,6 @@ class DisplayPanel(QWidget):
                 parallelTrain(cropped, batch_size, epochs, iterations, gen_samples)
         except Exception as e:
             self._show_error("Adaptation Error", str(e))
-
-    def save_data(self):
-        try:
-            dname = QFileDialog.getExistingDirectory(self, 'Save directory', 'C:/')
-            if dname:
-                utils.save2dData(self.dataEnhanced, "seismic.sgy", dname, self.data.min(), self.data.max())
-        except Exception as e:
-            self._show_error("Save Error", str(e))
 
     def _show_error(self, title, message):
         error_dialog = QMessageBox(self)
