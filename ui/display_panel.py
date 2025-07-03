@@ -9,9 +9,9 @@ from ui.dialogs.range_dialog import RangeDialog
 from ui.dialogs.range_dialog import RangeDialogAd
 from ui.dialogs.progress_dialog import ProgressDialog
 from finetuning import parallelTrain
+from ui.view_control import ViewControl
 
 class EnhancementCancelled(Exception):
-    """Raised when the enhancement process is cancelled by the user."""
     pass
 
 class DisplayPanel(QWidget):
@@ -21,28 +21,33 @@ class DisplayPanel(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
+
         self.canvas = MplCanvas(self)
+        self.view_control = ViewControl(self.canvas)
         layout.addWidget(self.canvas)
         self.setLayout(layout)
-        
+
     def show_seismic(self, data, cmap="gray"):
-
-        #try:
-        #    xlim = self.canvas.ax.get_xlim()
-        #    ylim = self.canvas.ax.get_ylim()
-        #except Exception:
-        #   xlim = ylim = None
-
         self.canvas.ax.clear()
         self.canvas.ax.imshow(data.T, cmap=cmap, aspect='equal', origin='upper')
-        self.canvas.ax.tick_params(axis='both', colors='black')
+
+        filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
+        
+        # Estilo del título
+        self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
+
+        # Ejes estilizados
+        self.canvas.ax.set_xlabel("Trace", fontsize=11, color="#4D4D4D")
+        self.canvas.ax.set_ylabel("Depth", fontsize=11, color="#4D4D4D")
+        self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
+
         self.canvas.ax.spines['top'].set_visible(False)
         self.canvas.ax.spines['right'].set_visible(False)
+
         self.canvas.figure.tight_layout()
 
-        #if xlim and ylim:
-        #    self.canvas.ax.set_xlim(xlim)
-        #    self.canvas.ax.set_ylim(ylim)
+        self.view_control.store_original_view()
+        self.view_control.restore_view()
 
         self.canvas.draw()
 
@@ -57,10 +62,10 @@ class DisplayPanel(QWidget):
             self.show_seismic(self.data, cmap="gray")
         else:
             return
-    
+
     def load_file(self, path, mode):
         try:
-            print(f"📂 Loading file: {path} as {mode}")
+            print(f"\U0001F4C2 Loading file: {path} as {mode}")
             self.mode = mode
             self.data_path = path
             if mode == "2D":
@@ -72,28 +77,10 @@ class DisplayPanel(QWidget):
                 
                 self.data -= self.data.min()
                 self.data /= self.data.max()
-                '''
-                with segyio.open(path, "r", ignore_geometry=True) as f:
-                    data = np.array(f.trace.raw[:])
-                '''
                 print(f"✅ Shape of 2D data: {self.data.shape}")
-                                   
                 self.dataEnhanced = None
                 self.show_seismic(self.data, cmap="gray")
             elif mode == "3D":
-                '''
-                with segyio.open(path, "r") as f:
-                    f.mmap()
-                    cube = segyio.tools.cube(f)
-                    print(f"✅ Shape of 3D cube: {cube.shape}")
-                    middle_slice = cube.shape[0] // 2
-                    data = cube[middle_slice, :, :]
-                    self.data = data                    
-                    self.dataEnhanced = None
-                    self.show_seismic(data, cmap="gray")
-                '''
-                #global datamin, datamax
-
                 self.file = segyio.open(path)
                 self.ilines = list(self.file.ilines)
                 self.xlines = list(self.file.xlines)
@@ -101,7 +88,7 @@ class DisplayPanel(QWidget):
                 main_window = find_main_window(self)
                 if main_window and hasattr(main_window, "sidebar"):
                     main_window.sidebar.set_ixline_limits(self.ilines[0],self.ilines[-1],self.xlines[0],self.xlines[-1])
-                    
+
                 self.data = self.file.iline[self.ilines[0]]
                 self.show_seismic(self.data, cmap="gray")
 
@@ -186,13 +173,6 @@ class DisplayPanel(QWidget):
         error_dialog.exec_()
 
     def _show_wiggle(self, data):
-
-        #try:
-        #    xlim = self.canvas.ax.get_xlim()
-        #    ylim = self.canvas.ax.get_ylim()
-        #except Exception:
-        #    xlim = ylim = None
-    
         self.canvas.ax.clear()
         for i in range(data.shape[1]):
             trace = data.T[:, i]
@@ -200,10 +180,15 @@ class DisplayPanel(QWidget):
             self.canvas.ax.plot(norm_trace + i, range(len(trace)), color="black", linewidth=0.2)
         self.canvas.ax.invert_yaxis()
 
-        #if xlim and ylim:
-        #    self.canvas.ax.set_xlim(xlim)
-        #    self.canvas.ax.set_ylim(ylim)
+        filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Wiggle"
 
+        self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
+        self.canvas.ax.set_xlabel("Trace", fontsize=11, color="#4D4D4D")
+        self.canvas.ax.set_ylabel("Depth", fontsize=11, color="#4D4D4D")
+        self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
+
+        self.view_control.store_original_view()
+        self.view_control.restore_view()
         self.canvas.draw()
 
     def set_visualization_mode(self, mode):
@@ -211,7 +196,6 @@ class DisplayPanel(QWidget):
             print("No hay datos cargados aún.")
             return
 
-        # Asegurar que al menos uno exista antes de usar
         if hasattr(self, "dataEnhanced") and self.dataEnhanced is not None:
             data = self.dataEnhanced
         elif hasattr(self, "data") and self.data is not None:
@@ -228,7 +212,6 @@ class DisplayPanel(QWidget):
             self._show_wiggle(data)
         else:
             print(f"Modo desconocido: {mode}")
-
 
 def find_main_window(widget):
     while widget:
@@ -247,8 +230,6 @@ class MplCanvas(FigureCanvas):
 
         self.draw_empty()
 
-        self.mpl_connect("scroll_event", self._on_scroll)
-
     def draw_empty(self):
         self.ax.clear()
         self.ax.set_facecolor('white')
@@ -264,28 +245,4 @@ class MplCanvas(FigureCanvas):
         self.ax.set_xticks([])
         self.ax.set_yticks([])
         self.ax.axis('off')
-        self.draw()
-
-    def _on_scroll(self, event):
-        base_scale = 1.2
-        xdata, ydata = event.xdata, event.ydata
-        if xdata is None or ydata is None:
-            return
-
-        scale_factor = 1 / base_scale if event.button == 'up' else base_scale
-
-        cur_xlim = self.ax.get_xlim()
-        cur_ylim = self.ax.get_ylim()
-
-        new_xlim = [
-            xdata - (xdata - cur_xlim[0]) * scale_factor,
-            xdata + (cur_xlim[1] - xdata) * scale_factor
-        ]
-        new_ylim = [
-            ydata - (ydata - cur_ylim[0]) * scale_factor,
-            ydata + (cur_ylim[1] - ydata) * scale_factor
-        ]
-
-        self.ax.set_xlim(new_xlim)
-        self.ax.set_ylim(new_ylim)
         self.draw()

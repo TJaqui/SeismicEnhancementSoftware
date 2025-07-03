@@ -24,7 +24,7 @@ class RangeDialog(QDialog):
         layout.setSpacing(16)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        title = QLabel("Select data range")
+        title = QLabel("Data range")
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet("font-size: 16px; font-weight: 600; color: #1E1E1E;")
         layout.addWidget(title)
@@ -89,8 +89,13 @@ class RangeDialogAd(RangeDialog):
         self.epochs = QLineEdit("30")
         self.gensamples = QLineEdit("100")
 
-        self.layout().insertLayout(3, self._row("Batch:", self.batch, "Iterations:", self.iterations))
-        self.layout().insertLayout(4, self._row("Epochs:", self.epochs, "Samples:", self.gensamples))
+        fine_tuning_label = QLabel("Fine tuning")
+        fine_tuning_label.setAlignment(Qt.AlignCenter)  
+        fine_tuning_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #1E1E1E;")
+        
+        self.layout().insertWidget(3, fine_tuning_label)
+        self.layout().insertLayout(4, self._row("Batch:", self.batch, "Iterations:", self.iterations))
+        self.layout().insertLayout(5, self._row("Epochs:", self.epochs, "Samples:", self.gensamples))
 
         if self.data is not None:
             self.selector = RectangleSelector(

@@ -246,7 +246,10 @@ def save2dData(data, data_name, path, dmin, dmax):
     dstpath = f"{path}/enhanced.sgy"
     with segyio.open(output_file, 'r+', ignore_geometry=True) as src:
 
-        src.trace.raw[:][:] = denorm_enhanced.T
+        if denorm_enhanced.shape == src.trace.raw[:].shape:
+            src.trace.raw[:] = denorm_enhanced
+        else:
+            raise ValueError(f"Shape mismatch: data shape {denorm_enhanced.shape} vs trace shape {src.trace.raw[:].shape}")
         
         spec = segyio.spec()
         #spec.sorting = src.sorting
