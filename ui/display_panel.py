@@ -22,21 +22,22 @@ class DisplayPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
 
+        self.showing_enhanced = False 
+        self.current_mode = "gray"
         self.canvas = MplCanvas(self)
         self.view_control = ViewControl(self.canvas)
         layout.addWidget(self.canvas)
         self.setLayout(layout)
 
-    def show_seismic(self, data, cmap="gray"):
+    def show_seismic(self, data, cmap=None):
+        if cmap is None:
+            cmap = self.current_mode
+
         self.canvas.ax.clear()
         self.canvas.ax.imshow(data.T, cmap=cmap, aspect='equal', origin='upper')
 
         filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
-        
-        # Estilo del título
         self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
-
-        # Ejes estilizados
         self.canvas.ax.set_xlabel("Trace", fontsize=11, color="#4D4D4D")
         self.canvas.ax.set_ylabel("Depth", fontsize=11, color="#4D4D4D")
         self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
@@ -51,15 +52,29 @@ class DisplayPanel(QWidget):
 
         self.canvas.draw()
 
+    def show_current(self):
+        if self.showing_enhanced and hasattr(self, "dataEnhanced") and self.dataEnhanced is not None:
+            data = self.dataEnhanced
+        elif hasattr(self, "data") and self.data is not None:
+            data = self.data
+        else:
+            print("No hay datos válidos para mostrar.")
+            return
+
+        if self.current_mode == "wiggle":
+            self._show_wiggle(data)
+        else:
+            self.show_seismic(data)
+
     def update_plot(self):
         if self.sidebar.inline_btn.isChecked():
             line_num = self.sidebar.iline_spin.value()
             self.data = self.file.iline[line_num]
-            self.show_seismic(self.data, cmap="gray")
+            self.show_current()
         elif self.sidebar.crossline_btn.isChecked():
             line_num = self.sidebar.xline_spin.value()
             self.data = self.file.xline[line_num]
-            self.show_seismic(self.data, cmap="gray")
+            self.show_current()
         else:
             return
 
@@ -74,12 +89,12 @@ class DisplayPanel(QWidget):
                 self.data = self.file.trace.raw[:]
                 datamin =  self.data.min()
                 datamax = self.data.max()
-                
+
                 self.data -= self.data.min()
                 self.data /= self.data.max()
                 print(f"✅ Shape of 2D data: {self.data.shape}")
                 self.dataEnhanced = None
-                self.show_seismic(self.data, cmap="gray")
+                self.show_current()
             elif mode == "3D":
                 self.file = segyio.open(path)
                 self.ilines = list(self.file.ilines)
@@ -90,7 +105,7 @@ class DisplayPanel(QWidget):
                     main_window.sidebar.set_ixline_limits(self.ilines[0],self.ilines[-1],self.xlines[0],self.xlines[-1])
 
                 self.data = self.file.iline[self.ilines[0]]
-                self.show_seismic(self.data, cmap="gray")
+                self.show_current()
 
         except Exception as e:
             print(f"❌ Failed to load seismic data: {e}")
@@ -134,7 +149,7 @@ class DisplayPanel(QWidget):
                 lf:self.datatoEnhanced.shape[1] - rt
             ]
 
-            self.show_seismic(self.dataEnhanced, cmap="gray")
+            self.show_current()
             progress_dialog.update_progress(100)
             progress_dialog.accept()
 
@@ -157,9 +172,9 @@ class DisplayPanel(QWidget):
             dialog = RangeDialogAd(self, data=self.data)
             if dialog.exec_() == dialog.Accepted:
                 x_start, x_end, y_start, y_end = dialog.get_ranges()
-                batch_size, iterations, epochs, gen_samples = dialog.get_ranges()
+                batch_size, iterations, epochs, gen_samples = dialog.get_train_data()
                 cropped = self.data[y_start:y_end, x_start:x_end]
-                self.show_seismic(cropped, cmap="gray")
+                self.show_seismic(cropped)
                 parallelTrain(cropped, batch_size, epochs, iterations, gen_samples)
         except Exception as e:
             self._show_error("Adaptation Error", str(e))
@@ -196,22 +211,8 @@ class DisplayPanel(QWidget):
             print("No hay datos cargados aún.")
             return
 
-        if hasattr(self, "dataEnhanced") and self.dataEnhanced is not None:
-            data = self.dataEnhanced
-        elif hasattr(self, "data") and self.data is not None:
-            data = self.data
-        else:
-            print("No hay datos válidos para mostrar.")
-            return
-
-        if mode == "seismic":
-            self.show_seismic(data, cmap="seismic")
-        elif mode == "gray":
-            self.show_seismic(data, cmap="gray")
-        elif mode == "wiggle":
-            self._show_wiggle(data)
-        else:
-            print(f"Modo desconocido: {mode}")
+        self.current_mode = mode
+        self.show_current()
 
 def find_main_window(widget):
     while widget:

@@ -85,11 +85,11 @@ class MainWindow(QMainWindow):
 
     def toggle_view_mode(self, id):
         if id == 0 and self.displaypanel.data is not None:
-            self.displaypanel.show_seismic(self.displaypanel.data, cmap="gray")
-            self.showing_enhanced = False
+            self.displaypanel.showing_enhanced = False
+            self.displaypanel.show_current()
         elif id == 1 and self.displaypanel.dataEnhanced is not None:
-            self.displaypanel.show_seismic(self.displaypanel.dataEnhanced, cmap="gray")
-            self.showing_enhanced = True
+            self.displaypanel.showing_enhanced = True
+            self.displaypanel.show_current()
 
     def _show_help(self):
         dialog = HelpDialog(self)
