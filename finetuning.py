@@ -225,7 +225,7 @@ def train(queue, epochs, loss_train, batch_size, i, psnr_train):
 
 def adaptSection(sec):
     data = sec
-    data = torch.from_numpy(data).float()
+    #data = torch.from_numpy(data).float()
     data = data.unsqueeze(0).unsqueeze(0)
     if data.shape[1]>128 and data.shape[1]<384:
         data = F.interpolate(data,(128,128),mode="bicubic")
@@ -238,10 +238,11 @@ def adaptSection(sec):
 
 #if __name__=='__main__':
 def parallelTrain(section, batch_size=5, epochs=30, iterations=1, gen_samples=100):
-    
+    #print(section.dtype)
     #multiprocessing.set_start_method('spawn')
-    new_dat = adaptSection(section)
-    innd1, innd2 = degradedImages(new_dat, gen_samples)
+    #new_dat = adaptSection(section)
+    #print(new_dat.shape,new_dat.dtype)
+    innd1, innd2 = degradedImages(section, gen_samples)
     innd1_np = innd1.detach().cpu().numpy()
     innd2_np = innd2.cpu().numpy()
 

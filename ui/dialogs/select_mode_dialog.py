@@ -1,10 +1,11 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QRadioButton, QPushButton, QButtonGroup, QFileDialog
 from PyQt5.QtCore import Qt
+from pathlib import Path 
 
 class SelectModeDialog(QDialog):
     def __init__(self, parent=None):
         super(SelectModeDialog, self).__init__(parent)
-        self.setWindowTitle("Select data dimensions")
+        self.setWindowTitle("Select data type")
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setFixedSize(320, 180)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
@@ -16,7 +17,7 @@ class SelectModeDialog(QDialog):
         layout.setAlignment(Qt.AlignCenter)
         layout.setSpacing(20)
 
-        title = QLabel("Select data dimensions")
+        title = QLabel("Select data type")
         title.setStyleSheet("font-size: 16px; font-weight: 600; color: #1E1E1E;")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
@@ -54,9 +55,14 @@ class SelectModeDialog(QDialog):
         self.setLayout(layout)
 
     def on_confirm(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, 'Open seismic file', '', 'SEGY files (*.sgy *.segy);;All files (*)')
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            'Open seismic file',
+            '',
+            'SEGY files (*.sgy *.segy)' 
+        )
         if file_path:
-            self.selected_file = file_path
+            self.selected_file = str(Path(file_path))
             self.selected_mode = "2D" if self.radio_2d.isChecked() else "3D"
             self.accept()
 

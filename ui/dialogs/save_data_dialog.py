@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from ui.canvas_widget import MplCanvas
 from utils import save2dData, save3dData
-import os
+from pathlib import Path
 
 class SaveDataDialog(QDialog):
     def __init__(self, data, dataEnhanced, data_name, mode, parent=None):
@@ -77,23 +77,29 @@ class SaveDataDialog(QDialog):
         self.canvas.draw()
 
     def save_data(self):
-        path = self.location_input.text()
+        folder = self.location_input.text().strip()
         filename = self.filename_input.text().strip()
 
-        if not path or not filename:
+        if not folder or not filename:
             QMessageBox.warning(self, "Missing Info", "Please select a location and filename.")
             return
 
-        full_path = os.path.join(path, filename + ".sgy")
+        folder_path = Path(folder)
+        if not folder_path.exists() or not folder_path.is_dir():
+            QMessageBox.critical(self, "Error", "Invalid folder path.")
+            return
+
+        dst_path = folder_path / (filename + ".sgy")
         data_to_save = self.dataEnhanced if self.dataEnhanced is not None else self.data
 
         try:
             dmin, dmax = data_to_save.min(), data_to_save.max()
             if self.mode == "2D":
-                save2dData(data_to_save, self.data_name, path, dmin, dmax)
+                save2dData(data_to_save, self.data_name, str(folder_path), dmin, dmax)
             elif self.mode == "3D":
-                save3dData(data_to_save, self.data_name, path, dmin, dmax)
-            QMessageBox.information(self, "Success", f"Data saved successfully to:\n{full_path}")
+                save3dData(data_to_save, self.data_name, str(folder_path), dmin, dmax)
+
+            QMessageBox.information(self, "Success", f"Data saved successfully to:\n{dst_path}")
             self.accept()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save data:\n{e}")

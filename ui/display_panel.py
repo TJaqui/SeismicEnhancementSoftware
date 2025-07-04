@@ -1,15 +1,15 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QFileDialog, QMessageBox, QApplication, QMainWindow
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QApplication, QMainWindow
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import numpy as np
 import segyio
-import time
 import utils
 from ui.dialogs.range_dialog import RangeDialog
 from ui.dialogs.range_dialog import RangeDialogAd
 from ui.dialogs.progress_dialog import ProgressDialog
 from finetuning import parallelTrain
 from ui.view_control import ViewControl
+from pathlib import Path
 
 class EnhancementCancelled(Exception):
     pass
@@ -80,14 +80,17 @@ class DisplayPanel(QWidget):
 
     def load_file(self, path, mode):
         try:
+            path = Path(path) 
             print(f"\U0001F4C2 Loading file: {path} as {mode}")
+            
             self.mode = mode
-            self.data_path = path
+            self.data_path = str(path)
+
             if mode == "2D":
                 global datamin, datamax
-                self.file = segyio.open(path,ignore_geometry=True)
+                self.file = segyio.open(str(path), ignore_geometry=True)
                 self.data = self.file.trace.raw[:]
-                datamin =  self.data.min()
+                datamin = self.data.min()
                 datamax = self.data.max()
 
                 self.data -= self.data.min()
@@ -95,14 +98,15 @@ class DisplayPanel(QWidget):
                 print(f"✅ Shape of 2D data: {self.data.shape}")
                 self.dataEnhanced = None
                 self.show_current()
+
             elif mode == "3D":
-                self.file = segyio.open(path)
+                self.file = segyio.open(str(path))
                 self.ilines = list(self.file.ilines)
                 self.xlines = list(self.file.xlines)
 
                 main_window = find_main_window(self)
                 if main_window and hasattr(main_window, "sidebar"):
-                    main_window.sidebar.set_ixline_limits(self.ilines[0],self.ilines[-1],self.xlines[0],self.xlines[-1])
+                    main_window.sidebar.set_ixline_limits(self.ilines[0], self.ilines[-1], self.xlines[0], self.xlines[-1])
 
                 self.data = self.file.iline[self.ilines[0]]
                 self.show_current()
@@ -110,6 +114,7 @@ class DisplayPanel(QWidget):
         except Exception as e:
             print(f"❌ Failed to load seismic data: {e}")
             self.canvas.draw_empty()
+
 
     def enhance_data(self):
         progress_dialog = None
@@ -174,7 +179,7 @@ class DisplayPanel(QWidget):
                 x_start, x_end, y_start, y_end = dialog.get_ranges()
                 batch_size, iterations, epochs, gen_samples = dialog.get_train_data()
                 cropped = self.data[y_start:y_end, x_start:x_end]
-                self.show_seismic(cropped)
+                #self.show_seismic(cropped)
                 parallelTrain(cropped, batch_size, epochs, iterations, gen_samples)
         except Exception as e:
             self._show_error("Adaptation Error", str(e))
