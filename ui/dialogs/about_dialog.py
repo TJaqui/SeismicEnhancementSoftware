@@ -21,7 +21,7 @@ class AboutDialog(QDialog):
         title.setStyleSheet("color: #1E1E1E;")
         layout.addWidget(title)
 
-        desc = QLabel("This project was developed to provide useful tools for data visualization and seismic enhancement.")
+        desc = QLabel("This work was funded by the Vicerrectoría de Investigacion y Extensi´on from Universidad Industrial de Santander under Project 3925.")
         desc.setWordWrap(True)
         desc.setAlignment(Qt.AlignCenter)
         desc.setStyleSheet("font-size: 13px; color: #4D4D4D;")
@@ -42,7 +42,7 @@ class AboutDialog(QDialog):
 
         layout.addLayout(contributors_layout)
 
-        footer = QLabel("© 2025 HDSP")
+        footer = QLabel("© 2025 UIS")
         footer.setAlignment(Qt.AlignCenter)
         footer.setFont(QFont("Arial", 10))
         footer.setStyleSheet("color: #888888;")

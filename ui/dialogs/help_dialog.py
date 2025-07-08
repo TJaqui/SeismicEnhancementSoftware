@@ -35,7 +35,7 @@ class HelpDialog(QDialog):
         link_label.setStyleSheet("font-size: 14px; color: #2979FF;")
         layout.addWidget(link_label)
 
-        footer = QLabel("© 2025 HDSP")
+        footer = QLabel("© 2025 UIS")
         footer.setAlignment(Qt.AlignCenter)
         footer.setFont(QFont("Arial", 10))
         footer.setStyleSheet("color: #888888;")
