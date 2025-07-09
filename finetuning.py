@@ -237,11 +237,8 @@ def adaptSection(sec):
     
 
 #if __name__=='__main__':
-def parallelTrain(section, batch_size=5, epochs=30, iterations=1, gen_samples=100):
-    #print(section.dtype)
-    #multiprocessing.set_start_method('spawn')
-    #new_dat = adaptSection(section)
-    #print(new_dat.shape,new_dat.dtype)
+def parallelTrain(section, batch_size=5, epochs=30, iterations=1, gen_samples=100, progress_callback=None):
+
     innd1, innd2 = degradedImages(section, gen_samples)
     innd1_np = innd1.detach().cpu().numpy()
     innd2_np = innd2.cpu().numpy()
@@ -249,25 +246,22 @@ def parallelTrain(section, batch_size=5, epochs=30, iterations=1, gen_samples=10
     queue = multiprocessing.Queue()
     queue.put((innd1_np, innd2_np))
 
-    epochs = epochs
-    batch_size = batch_size
     loss_train = []
     psnr_train = []
 
-    iterations=iterations
-
     for i in range(iterations):
-        print(i)
-        pro1 = multiprocessing.Process(target=train, args=(queue, epochs, loss_train, batch_size,i,psnr_train))
-        pro1.start()
+        if progress_callback:
+            progress_callback(int((i / iterations) * 100), f"Iteration {i+1} of {iterations}")
 
-        pro2 = multiprocessing.Process(target=degradingImages, args=(queue,section,gen_samples))
+        pro1 = multiprocessing.Process(target=train, args=(queue, epochs, loss_train, batch_size, i, psnr_train))
+        pro2 = multiprocessing.Process(target=degradingImages, args=(queue, section, gen_samples))
+
+        pro1.start()
         pro2.start()
 
         pro1.join()
-        if i == (iterations-1):
-
+        if i == (iterations - 1):
             pro2.terminate()
 
-
-
+    if progress_callback:
+        progress_callback(100, "Adaptation complete")

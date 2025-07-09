@@ -173,16 +173,42 @@ class DisplayPanel(QWidget):
                 progress_dialog.reject()
 
     def adapt_to_data(self):
+        progress_dialog = None
         try:
             dialog = RangeDialogAd(self, data=self.data)
-            if dialog.exec_() == dialog.Accepted:
-                x_start, x_end, y_start, y_end = dialog.get_ranges()
-                batch_size, iterations, epochs, gen_samples = dialog.get_train_data()
-                cropped = self.data[y_start:y_end, x_start:x_end]
-                #self.show_seismic(cropped)
-                parallelTrain(cropped, batch_size, epochs, iterations, gen_samples)
+            if dialog.exec_() != dialog.Accepted:
+                return
+
+            x_start, x_end, y_start, y_end = dialog.get_ranges()
+            batch_size, iterations, epochs, gen_samples = dialog.get_train_data()
+            cropped = self.data[y_start:y_end, x_start:x_end]
+
+            # Mostrar barra de progreso
+            progress_dialog = ProgressDialog("Adapting to Data", self)
+            progress_dialog.label.setText("Adapting...")
+            progress_dialog.show()
+            QApplication.processEvents()
+
+            def safe_update(value, msg=""):
+                if progress_dialog.is_cancelled():
+                    raise EnhancementCancelled()
+                progress_dialog.update_progress(value, msg)
+
+            # Entrenamiento
+            parallelTrain(cropped, batch_size, epochs, iterations, gen_samples, progress_callback=safe_update)
+
+            progress_dialog.update_progress(100)
+            progress_dialog.accept()
+
+        except EnhancementCancelled:
+            print("🚫 Adaptation cancelled by user.")
         except Exception as e:
+            print(f"❌ Adaptation Error: {e}")
             self._show_error("Adaptation Error", str(e))
+        finally:
+            if progress_dialog and progress_dialog.isVisible():
+                progress_dialog.reject()
+
 
     def _show_error(self, title, message):
         error_dialog = QMessageBox(self)
