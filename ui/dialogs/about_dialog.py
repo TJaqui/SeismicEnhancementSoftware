@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QHBoxLayout, QPushButton,QSizePolicy
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtCore import Qt
 
@@ -7,7 +7,7 @@ class AboutDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("About")
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setFixedSize(420, 360)
+        self.setFixedSize(580, 500)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
 
         layout = QVBoxLayout()
@@ -27,20 +27,55 @@ class AboutDialog(QDialog):
         desc.setStyleSheet("font-size: 13px; color: #4D4D4D;")
         layout.addWidget(desc)
 
-        contributors_layout = QHBoxLayout()
+        than = QLabel("This work was funded by the Vicerrectoría de Investigacion y Extensión from Universidad Industrial de Santander under Project 3925.")
+        than.setWordWrap(True)
+        than.setAlignment(Qt.AlignCenter)
+        than.setStyleSheet("font-size: 13px; color: #4D4D4D;")
+        layout.addWidget(than)
+
+        contributors_layout = QVBoxLayout()
         contributors_layout.setAlignment(Qt.AlignCenter)
 
-        icon_path = "resources/icons/Logos_collaborators.png"
-        try:
-            pixmap = QPixmap(icon_path).scaled(240, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            icon_label = QLabel()
-            icon_label.setPixmap(pixmap)
-            icon_label.setAlignment(Qt.AlignCenter)
-            contributors_layout.addWidget(icon_label)
-        except Exception as e:
-            print(f"Failed to load icon {icon_path}: {e}")
+        # === Top row: 4 logos ===
+        top_row_layout = QHBoxLayout()
+        top_row_layout.setAlignment(Qt.AlignCenter)
 
+        top_logos = [
+            "resources/icons/GrupoGIRG.png",
+            "resources/icons/GrupoGIGBA.png",
+            "resources/icons/hdsp.png",
+        ]
+        maximun_size=[(50,70),(70,50),(70,50)]
+        for path,maximun_size in zip(top_logos,maximun_size):
+            print(path, maximun_size)
+            try:
+                pixmap = QPixmap(path).scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                label = QLabel()
+                label.setPixmap(pixmap)
+                label.setAlignment(Qt.AlignCenter)
+                label.setFixedSize(100, 100)  # Make the label exactly the same size
+                top_row_layout.addWidget(label)
+            except Exception as e:
+                print(f"Failed to load {path}: {e}")
+
+        contributors_layout.addLayout(top_row_layout)
+
+        # === Bottom row: 1 centered logo ===
+        bottom_logo_path = "resources/icons/uis.png"
+        try:
+            pixmap = QPixmap(bottom_logo_path).scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            label = QLabel()
+            label.setPixmap(pixmap)
+            label.setAlignment(Qt.AlignCenter)
+            label.setFixedSize(100, 100)
+            contributors_layout.addWidget(label, alignment=Qt.AlignHCenter)
+        except Exception as e:
+            print(f"Failed to load {bottom_logo_path}: {e}")
+
+        # === Add to main layout ===
         layout.addLayout(contributors_layout)
+
+
 
         footer = QLabel("© 2025 UIS")
         footer.setAlignment(Qt.AlignCenter)
