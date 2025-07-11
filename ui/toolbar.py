@@ -105,10 +105,10 @@ class DropDownMenuIcon(QWidget):
 
 
 class TopToolBar(QWidget):
-    def __init__(self, parent=None, display_panel=None):
+    def __init__(self, parent=None, display_panel=None, mode="2D"):
         super(TopToolBar, self).__init__(parent)
-
         self.display_panel = display_panel
+        self.mode = mode
         self.current_visualization = None
 
         outer_layout = QHBoxLayout()

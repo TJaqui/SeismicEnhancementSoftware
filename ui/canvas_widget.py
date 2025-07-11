@@ -5,10 +5,14 @@ from PyQt5.QtCore import Qt
 
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None):
-        fig = Figure()
-        self.ax = fig.add_subplot(111)
-        super().__init__(fig)
-        self.zoom_factor = 1.2  # Factor for zooming in/out
+        self.fig = Figure()
+        self.ax = self.fig.add_subplot(111)  # Solo un eje principal
+
+        super().__init__(self.fig)
+        self.colorbar = None
+        self.setParent(parent)
+
+        self.zoom_factor = 1.2
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFocus()
 

@@ -28,10 +28,8 @@ class App(QStackedWidget):
                 self.main_window = MainWindow(mode=mode, file_path=file_path)
                 self.addWidget(self.main_window)
                 self.setCurrentWidget(self.main_window)
-                if mode == "3D":
-                    self.main_window.sidebar.show_3d_options()
-                else:
-                    self.main_window.sidebar.hide_3d_options()
             else:
                 print("⚠️ No file selected.")
+
+
 

@@ -2,14 +2,13 @@ from PyQt5.QtWidgets import (
     QFrame, QVBoxLayout, QPushButton,
     QButtonGroup, QWidget, QToolButton, QSpinBox
 )
-from PyQt5.QtCore import  Qt
+from PyQt5.QtCore import Qt
 
 
 class CollapsibleSection(QWidget):
     def __init__(self, title, buttons):
         super().__init__()
- 
-       
+
         self.toggle_button = QToolButton()
         self.toggle_button.setText(title)
         self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
@@ -63,9 +62,9 @@ class CollapsibleSection(QWidget):
         self.toggle_button.setArrowType(Qt.DownArrow if visible else Qt.RightArrow)
 
 
-class SideBar(QFrame):
+class SideBar3D(QFrame):
     def __init__(self, parent=None):
-        super(SideBar, self).__init__(parent)
+        super(SideBar3D, self).__init__(parent)
 
         self.setObjectName("leftBar")
         self.setFixedWidth(200)
@@ -75,24 +74,41 @@ class SideBar(QFrame):
         layout.setContentsMargins(12, 20, 12, 20)
         layout.setSpacing(12)
 
-        # --- Data View Buttons ---
-        self.view_original_btn = self._create_menu_button("Original")
-        self.view_enhanced_btn = self._create_menu_button("Enhanced")
-        self.view_difference_btn = self._create_menu_button("Difference")
+        self.spinboxes = {}  # Guarda spinboxes por sección
+        self.global_button_group = QButtonGroup()
+        self.global_button_group.setExclusive(True)
 
-        self.view_group = QButtonGroup()
-        self.view_group.setExclusive(True)
-        self.view_group.addButton(self.view_original_btn, 0)
-        self.view_group.addButton(self.view_enhanced_btn, 1)
-        self.view_group.addButton(self.view_difference_btn, 2)
+        self.button_ids = {}  # Map for reverse lookup: button -> (section, type)
 
-        self.data_section = CollapsibleSection("Data", [
-            self.view_original_btn,
-            self.view_enhanced_btn,
-            self.view_difference_btn
-        ])
-        self.data_section.setVisible(False)
-        layout.addWidget(self.data_section)
+        button_id_counter = 0
+
+        for section in ["Original", "Enhanced", "Difference"]:
+            inline_btn = self._create_menu_button("Inline")
+            crossline_btn = self._create_menu_button("Crossline")
+            iline_spin = self._create_spinbox()
+            xline_spin = self._create_spinbox()
+
+            # Add to global group and map
+            self.global_button_group.addButton(inline_btn, button_id_counter)
+            self.button_ids[inline_btn] = (section, "inline")
+            button_id_counter += 1
+
+            self.global_button_group.addButton(crossline_btn, button_id_counter)
+            self.button_ids[crossline_btn] = (section, "crossline")
+            button_id_counter += 1
+
+            # Por defecto, activar el inline original
+            if section == "Original":
+                inline_btn.setChecked(True)
+
+            self.spinboxes[section] = (iline_spin, xline_spin)
+
+            section_widget = CollapsibleSection(section, [
+                inline_btn, iline_spin, crossline_btn, xline_spin
+            ])
+            section_widget.setVisible(section == "Original")
+            setattr(self, f"section_{section.lower()}", section_widget)
+            layout.addWidget(section_widget)
 
         layout.addStretch()
         self.setLayout(layout)
@@ -121,10 +137,40 @@ class SideBar(QFrame):
         """)
         return btn
 
-    def show_view_buttons(self):
-        self.data_section.setVisible(True)
-        self.data_section.toggle_button.setChecked(True)
-        self.data_section._toggle_content()
+    def _create_spinbox(self):
+        spin = QSpinBox()
+        spin.setMinimum(0)
+        spin.setMaximum(0)
+        spin.setSingleStep(1)
+        spin.setStyleSheet("""
+            QSpinBox {
+                background-color: #FFFFFF;
+                border: 1px solid #CCCCCC;
+                border-radius: 6px;
+                padding: 4px;
+                font-size: 13px;
+            }
+        """)
+        return spin
 
-    def hide_view_buttons(self):
-        self.data_section.setVisible(False)
+    def set_ixline_limits(self, iline_min, iline_max, xline_min, xline_max):
+        for iline_spin, xline_spin in self.spinboxes.values():
+            iline_spin.setRange(iline_min, iline_max)
+            xline_spin.setRange(xline_min, xline_max)
+
+    def show_enhanced_and_difference(self):
+        self.section_enhanced.setVisible(True)
+        self.section_difference.setVisible(True)
+
+    def get_active_section(self):
+        checked_btn = self.global_button_group.checkedButton()
+        if checked_btn:
+            section, axis = self.button_ids[checked_btn]
+            spinbox = self.spinboxes[section][0] if axis == "inline" else self.spinboxes[section][1]
+            return section, axis, spinbox.value()
+        return None, None, None
+
+    def connect_spinboxes(self, callback):
+        for iline_spin, xline_spin in self.spinboxes.values():
+            iline_spin.valueChanged.connect(callback)
+            xline_spin.valueChanged.connect(callback)

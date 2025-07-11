@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QSpinBox)
+from PyQt5.QtWidgets import (QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QRadioButton, QButtonGroup)
 from PyQt5.QtCore import Qt
 from matplotlib.patches import Rectangle
 from ui.canvas_widget import MplCanvas
@@ -72,7 +72,7 @@ class RangeDialog(QDialog):
             if self.data is not None:
                 cropped = self.data[y_start:y_end, x_start:x_end]
                 self.canvas.ax.clear()
-                self.canvas.ax.imshow(cropped.T, cmap="gray", origin="upper", aspect="equal")
+                self.canvas.ax.imshow(cropped, cmap="gray", origin="upper", aspect="equal")
                 self.canvas.draw()
         except:
             pass
@@ -81,7 +81,8 @@ class RangeDialog(QDialog):
 class RangeDialogAd(QDialog):
     def __init__(self, parent=None, data=None):
         super().__init__(parent)
-        self.setWindowTitle("Adapt Training Parameters")
+        self.setWindowTitle("Select the box to extract the noise")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setFixedSize(700, 600)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
 
@@ -137,6 +138,20 @@ class RangeDialogAd(QDialog):
 
         self.update_plot(0, 0)
 
+        self.x_from.editingFinished.connect(self.on_manual_input)
+        self.y_from.editingFinished.connect(self.on_manual_input)
+
+    def on_manual_input(self):
+        try:
+            x = int(self.x_from.text())
+            y = int(self.y_from.text())
+        except ValueError:
+            return  # Ignorar si no es un número válido
+
+        x = max(0, min(x, self.data.shape[1] - 128))
+        y = max(0, min(y, self.data.shape[0] - 128))
+        self.update_plot(x, y)
+
     def _row(self, label1, field1, label2, field2):
         row = QHBoxLayout()
         row.addWidget(QLabel(label1))
@@ -165,7 +180,7 @@ class RangeDialogAd(QDialog):
         self.y_from.setText(str(y))
 
         self.canvas.ax.clear()
-        self.canvas.ax.imshow(self.data.T, cmap="gray", origin="upper")
+        self.canvas.ax.imshow(self.data, cmap="gray", origin="upper")
 
         self.rect = Rectangle((x, y), 128, 128, linewidth=2, edgecolor='cyan', facecolor='none')
         self.canvas.ax.add_patch(self.rect)
@@ -173,7 +188,7 @@ class RangeDialogAd(QDialog):
 
         preview_data = self.data[y:y + 128, x:x + 128]
         self.preview.ax.clear()
-        self.preview.ax.imshow(preview_data.T, cmap='gray', origin='upper')
+        self.preview.ax.imshow(preview_data, cmap='gray', origin='upper')
         self.preview.draw()
 
     def on_mouse_press(self, event):
@@ -211,79 +226,48 @@ class RangeDialogAd(QDialog):
                 int(self.epochs.text()), int(self.gensamples.text()))
 
 class RangeDialog3D(QDialog):
-    def __init__(self, parent=None, data=None):
+    def __init__(self, parent=None, data=None, iline_index=0, xline_index=0):
         super().__init__(parent)
-        self.setWindowTitle("Set 3D Slice")
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setFixedSize(460, 520)
+        self.setWindowTitle("Select 2D Section")
+        self.setFixedSize(460, 540)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
 
         self.data = data.copy() if data is not None else None
         self.canvas = MplCanvas(self)
-        self.mode = "inline"
 
-        # Toggle Buttons
-        self.inline_btn = QPushButton("Inline")
-        self.crossline_btn = QPushButton("Crossline")
-        self.inline_btn.setCheckable(True)
-        self.crossline_btn.setCheckable(True)
-        self.inline_btn.setChecked(True)
+        self.inline_radio = QRadioButton("Enhance Inline Section")
+        self.xline_radio = QRadioButton("Enhance Crossline Section")
+        self.inline_radio.setChecked(True)
 
-        for btn in [self.inline_btn, self.crossline_btn]:
-            btn.setMinimumHeight(36)
-            btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #FFFFFF;
-                    border: none;
-                    padding: 6px 12px;
-                    text-align: center;
-                    color: #1E1E1E;
-                    font-size: 13px;
-                    border-radius: 6px;
-                }
-                QPushButton:hover {
-                    background-color: #F0F0F0;
-                }
-                QPushButton:checked {
-                    background-color: #04BFAD;
-                    color: white;
-                }
-            """)
+        self.mode_group = QButtonGroup()
+        self.mode_group.addButton(self.inline_radio)
+        self.mode_group.addButton(self.xline_radio)
 
-        self.inline_btn.clicked.connect(self.set_inline_mode)
-        self.crossline_btn.clicked.connect(self.set_crossline_mode)
+        # Campos de recorte espacial
+        self.x_from = QLineEdit("0")
+        self.x_to = QLineEdit(str(self.data.shape[1]) if self.data is not None else "500")
+        self.y_from = QLineEdit("0")
+        self.y_to = QLineEdit(str(self.data.shape[0]) if self.data is not None else "500")
 
-        self.spin = QSpinBox()
-        self.spin.setMinimum(0)
-        self.spin.setMaximum(0)
-        self.spin.setSingleStep(1)
-        self.spin.setStyleSheet("""
-            QSpinBox {
-                background-color: #FFFFFF;
-                border: 1px solid #CCCCCC;
-                border-radius: 6px;
-                padding: 4px;
-                font-size: 13px;
-            }
-        """)
-        self.spin.valueChanged.connect(self.update_plot)
+        # Índices de referencia (de dónde vino el slice)
+        self.iline_from = QLineEdit(str(iline_index))
+        self.iline_to = QLineEdit(str(iline_index))
+        self.xline_from = QLineEdit(str(xline_index))
+        self.xline_to = QLineEdit(str(xline_index))
 
-        # Layout principal
+        # Layout general
         layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
-        layout.setSpacing(16)
         layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
 
-        title = QLabel("Select Slice (Inline/Crossline)")
-        title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("font-size: 16px; font-weight: 600; color: #1E1E1E;")
-        layout.addWidget(title)
-
-        toggle_layout = QHBoxLayout()
-        toggle_layout.addWidget(self.inline_btn)
-        toggle_layout.addWidget(self.crossline_btn)
-        layout.addLayout(toggle_layout)
-        layout.addLayout(self._row("Index:", self.spin))
+        layout.addWidget(QLabel("Select enhancement axis:"))
+        layout.addWidget(self.inline_radio)
+        layout.addLayout(self._row("Inline from:", self.iline_from, "to", self.iline_to))
+        layout.addWidget(self.xline_radio)
+        layout.addLayout(self._row("Xline from:", self.xline_from, "to", self.xline_to))
+        layout.addSpacing(8)
+        layout.addLayout(self._row("X from:", self.x_from, "to", self.x_to))
+        layout.addLayout(self._row("Y from:", self.y_from, "to", self.y_to))
         layout.addWidget(self.canvas)
 
         # Botones
@@ -300,51 +284,42 @@ class RangeDialog3D(QDialog):
         layout.addLayout(btn_layout)
 
         self.setLayout(layout)
-        self.configure_spin_limits()
+
+        # Conexión dinámica
+        for box in [self.x_from, self.x_to, self.y_from, self.y_to]:
+            box.textChanged.connect(self.update_plot)
+
         self.update_plot()
 
-    def _row(self, label, widget):
+    def _row(self, label1, field1, label2, field2):
         row = QHBoxLayout()
-        row.addWidget(QLabel(label))
-        row.addWidget(widget)
+        row.addWidget(QLabel(label1))
+        row.addWidget(field1)
+        row.addWidget(QLabel(label2))
+        row.addWidget(field2)
         return row
 
-    def configure_spin_limits(self):
-        if self.data is not None and self.data.ndim == 3:
-            d, h, w = self.data.shape
-            self.spin.setMaximum(d - 1 if self.mode == "inline" else w - 1)
-
-    def set_inline_mode(self):
-        self.mode = "inline"
-        self.inline_btn.setChecked(True)
-        self.crossline_btn.setChecked(False)
-        self.configure_spin_limits()
-        self.update_plot()
-
-    def set_crossline_mode(self):
-        self.mode = "crossline"
-        self.crossline_btn.setChecked(True)
-        self.inline_btn.setChecked(False)
-        self.configure_spin_limits()
-        self.update_plot()
+    def get_ranges(self):
+        return {
+            "mode": "iline" if self.inline_radio.isChecked() else "xline",
+            "x": (int(self.x_from.text()), int(self.x_to.text())),
+            "y": (int(self.y_from.text()), int(self.y_to.text())),
+            "iline": (int(self.iline_from.text()), int(self.iline_to.text())),
+            "xline": (int(self.xline_from.text()), int(self.xline_to.text()))
+        }
 
     def update_plot(self):
-        if self.data is None or self.data.ndim != 3:
-            return
-
-        idx = self.spin.value()
-        self.canvas.ax.clear()
-
-        if self.mode == "inline":
-            section = self.data[idx, :, :]
-        else:
-            section = self.data[:, :, idx]
-
-        self.canvas.ax.imshow(section.T, cmap="gray", origin="upper", aspect="auto")
-        self.canvas.draw()
-
-    def get_slice(self):
-        return {
-            "mode": self.mode,
-            "index": self.spin.value()
-        }
+        try:
+            if self.data is None:
+                return
+            x0 = int(self.x_from.text())
+            x1 = int(self.x_to.text())
+            y0 = int(self.y_from.text())
+            y1 = int(self.y_to.text())
+            if x1 > x0 and y1 > y0:
+                cropped = self.data[y0:y1, x0:x1]
+                self.canvas.ax.clear()
+                self.canvas.ax.imshow(cropped.T, cmap="gray", origin="upper", aspect="auto")
+                self.canvas.draw()
+        except:
+            pass
