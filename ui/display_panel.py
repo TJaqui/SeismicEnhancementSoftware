@@ -72,10 +72,29 @@ class DisplayPanel(QWidget):
         # Dibujar
         self.canvas.draw()
 
-    def show_difference(self):
+    def show_difference(self,  line=None,mode=None):
         if self.data is not None and self.dataEnhanced is not None:
-            diff = self.data - self.dataEnhanced
-            self.show_seismic(diff, cmap=self.current_mode) 
+          
+            #print(self.data.shape)
+            #print(self.dataEnhanced.shape)
+            #diff = self.data - self.dataEnhanced
+            if len(self.data.shape) <=2 and len(self.dataEnhanced.shape)<=2:
+                print("its in")
+                diff = self.data - self.dataEnhanced
+                self.show_seismic(diff, cmap=self.current_mode) 
+            elif  len(self.dataEnhanced.shape) ==3:
+                
+                
+                if mode=="inline":
+                   
+                    diff = self.data - self.dataEnhanced[line]
+                    self.show_seismic(diff, cmap=self.current_mode) 
+                else:
+                    
+                    diff = self.data - self.dataEnhanced[:,:,line].T
+
+                    self.show_seismic(diff, cmap=self.current_mode) 
+
 
     def show_current(self, line=None,mode=None):
         if self.showing_enhanced and hasattr(self, "dataEnhanced") and self.dataEnhanced is not None:
@@ -131,7 +150,7 @@ class DisplayPanel(QWidget):
             self.showing_enhanced = True
             self.show_current(line_num,line_type)
         elif section == "Difference" and self.dataEnhanced is not None:
-            self.show_difference()
+            self.show_difference(line_num,line_type)
 
         self.update_min_max_labels()
 
