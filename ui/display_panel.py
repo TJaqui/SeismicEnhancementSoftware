@@ -46,6 +46,7 @@ class DisplayPanel(QWidget):
                 self.canvas.fig.delaxes(ax)
 
         # Mostrar la imagen sísmica
+        
         im = self.canvas.ax.imshow(data, cmap=cmap, aspect='equal', origin='upper')
 
         # Título y etiquetas
@@ -76,7 +77,7 @@ class DisplayPanel(QWidget):
             diff = self.data - self.dataEnhanced
             self.show_seismic(diff, cmap=self.current_mode) 
 
-    def show_current(self):
+    def show_current(self, line=None,mode=None):
         if self.showing_enhanced and hasattr(self, "dataEnhanced") and self.dataEnhanced is not None:
             data = self.dataEnhanced
         elif hasattr(self, "data") and self.data is not None:
@@ -84,11 +85,29 @@ class DisplayPanel(QWidget):
         else:
             print("No hay datos válidos para mostrar.")
             return
-
-        if self.current_mode == "wiggle":
-            self._show_wiggle(data)
-        else:
-            self.show_seismic(data)
+        
+        
+        if len(data.shape) <=2:
+            if self.current_mode == "wiggle":
+                self._show_wiggle(data)
+            else:
+                self.show_seismic(data)
+                
+        
+        elif len(data.shape) ==3:
+            if mode=="inline":
+                if self.current_mode == "wiggle":
+                    self._show_wiggle(data[line])
+                else:
+                    self.show_seismic(data[line])
+                   
+            else:
+                if self.current_mode == "wiggle":
+                    self._show_wiggle(data[:,:,line].T)
+                else:
+                    self.show_seismic(data[:,:,line].T)
+                  
+                
 
         self.update_min_max_labels()
 
@@ -110,7 +129,7 @@ class DisplayPanel(QWidget):
             self.show_current()
         elif section == "Enhanced" and self.dataEnhanced is not None:
             self.showing_enhanced = True
-            self.show_current()
+            self.show_current(line_num,line_type)
         elif section == "Difference" and self.dataEnhanced is not None:
             self.show_difference()
 
