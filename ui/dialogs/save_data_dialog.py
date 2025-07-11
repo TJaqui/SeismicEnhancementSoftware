@@ -71,9 +71,9 @@ class SaveDataDialog(QDialog):
     def update_plot(self):
         self.canvas.ax.clear()
         if self.dataEnhanced is not None:
-            self.canvas.ax.imshow(self.dataEnhanced.T, cmap="gray", origin="upper", aspect="equal")
+            self.canvas.ax.imshow(self.dataEnhanced, cmap="gray", origin="upper", aspect="equal")
         else:
-            self.canvas.ax.imshow(self.data.T, cmap="gray", origin="upper", aspect="equal")
+            self.canvas.ax.imshow(self.data, cmap="gray", origin="upper", aspect="equal")
         self.canvas.draw()
 
     def save_data(self):
@@ -90,14 +90,14 @@ class SaveDataDialog(QDialog):
             return
 
         dst_path = folder_path / (filename + ".sgy")
-        data_to_save = self.dataEnhanced if self.dataEnhanced is not None else self.data
+        data_to_save = self.dataEnhanced.T if self.dataEnhanced is not None else self.data.T
 
         try:
             dmin, dmax = data_to_save.min(), data_to_save.max()
             if self.mode == "2D":
-                save2dData(data_to_save, self.data_name, str(folder_path), dmin, dmax)
+                save2dData(data_to_save, self.data_name, dst_path, dmin, dmax)
             elif self.mode == "3D":
-                save3dData(data_to_save, self.data_name, str(folder_path), dmin, dmax)
+                save3dData(data_to_save, self.data_name, dst_path, dmin, dmax)
 
             QMessageBox.information(self, "Success", f"Data saved successfully to:\n{dst_path}")
             self.accept()

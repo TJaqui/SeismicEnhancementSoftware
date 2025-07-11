@@ -241,15 +241,12 @@ def seismicEnhancement3D(data,shape,step=16, progress_callback=None):
     imgd_median = array.combine_blocks(Urec.reshape(blksz + (-1,)), shape, stpsz, np.median)
     return imgd_median
 
-def save2dData(data, data_name, path, dmin, dmax):
+def save2dData(data, template_path, dstpath, dmin, dmax):
     denorm_enhanced = data
-    output_file = Path(data_name)
-    dstpath = Path(path) / "enhanced.sgy"
+    template_file = Path(template_path)
 
-    with segyio.open(str(output_file), 'r+', ignore_geometry=True) as src:
-        if denorm_enhanced.shape == src.trace.raw[:].shape:
-            src.trace.raw[:] = denorm_enhanced
-        else:
+    with segyio.open(str(template_file), 'r', ignore_geometry=True) as src:
+        if denorm_enhanced.shape != src.trace.raw[:].shape:
             raise ValueError(f"Shape mismatch: data shape {denorm_enhanced.shape} vs trace shape {src.trace.raw[:].shape}")
 
         spec = segyio.spec()
@@ -261,16 +258,13 @@ def save2dData(data, data_name, path, dmin, dmax):
             dst.text[0] = src.text[0]
             dst.bin = src.bin
             dst.header = src.header
-            dst.trace = src.trace
+            dst.trace.raw[:] = denorm_enhanced
 
-def save3dData(data, data_name, path, dmin, dmax):
+def save3dData(data, template_path, dstpath, dmin, dmax):
     denorm_enhanced = data
-    output_file = Path(data_name)
-    dstpath = Path(path) / "enhanced.sgy"
+    template_file = Path(template_path)
 
-    with segyio.open(str(output_file), 'r+', ignore_geometry=True) as src:
-        src.trace.raw[:][:, :] = denorm_enhanced.T
-
+    with segyio.open(str(template_file), 'r', ignore_geometry=True) as src:
         spec = segyio.spec()
         spec.format = src.format
         spec.samples = src.samples
@@ -280,4 +274,5 @@ def save3dData(data, data_name, path, dmin, dmax):
             dst.text[0] = src.text[0]
             dst.bin = src.bin
             dst.header = src.header
-            dst.trace = src.trace
+            dst.trace.raw[:][:, :] = denorm_enhanced.T
+
