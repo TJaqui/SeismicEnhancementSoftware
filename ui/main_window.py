@@ -42,6 +42,7 @@ class MainWindow(QMainWindow):
         if self.mode == "3D":
             self.sidebar = SideBar3D()
             self.sidebar.connect_spinboxes(self.displaypanel.update_plot)
+            self.sidebar.connect_axis_buttons(self.on_axis_button_clicked)
         else:
             self.sidebar = SideBar()
 
@@ -92,6 +93,7 @@ class MainWindow(QMainWindow):
                 from ui.sidebar3d import SideBar3D
                 self.sidebar = SideBar3D()
                 self.sidebar.connect_spinboxes(self.displaypanel.update_plot)
+                self.sidebar.connect_axis_buttons(self.on_axis_button_clicked)
             else:
                 self.sidebar = SideBar()
                 self.sidebar.iline_spin.valueChanged.connect(self.displaypanel.update_plot)
@@ -111,6 +113,9 @@ class MainWindow(QMainWindow):
             self.mode = mode
             self.displaypanel.load_file(file_path, mode)
 
+    def on_axis_button_clicked(self, section, axis, value):
+        self.displaypanel.update_slice(section, axis, value)
+
     def change_colormap(self, id):
         if self.displaypanel.data is not None:
             colors = ["seismic", "gray", "hot"]
@@ -123,10 +128,6 @@ class MainWindow(QMainWindow):
             file_path = dialog.get_file_path()
             mode = dialog.get_mode()
             self.displaypanel.load_file(file_path, mode)
-            if mode == "3D":
-                self.sidebar.show_3d_options()
-            else:
-                self.sidebar.hide_3d_options()
 
     def toggle_view_mode(self, id):
         if id == 0 and self.displaypanel.data is not None:

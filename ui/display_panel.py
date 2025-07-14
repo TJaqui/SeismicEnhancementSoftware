@@ -14,6 +14,7 @@ from ui.sidebar3d import SideBar3D
 from finetuning import parallelTrain
 from ui.view_control import ViewControl
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 class EnhancementCancelled(Exception):
     pass
@@ -96,37 +97,39 @@ class DisplayPanel(QWidget):
                     self.show_seismic(diff, cmap=self.current_mode) 
 
 
-    def show_current(self, line=None,mode=None):
+    def show_current(self, line=None, mode=None):
         if self.showing_enhanced and hasattr(self, "dataEnhanced") and self.dataEnhanced is not None:
             data = self.dataEnhanced
         elif hasattr(self, "data") and self.data is not None:
             data = self.data
         else:
-            print("No hay datos válidos para mostrar.")
-            return
-        
-        
-        if len(data.shape) <=2:
+            print("❌ No hay datos válidos para mostrar.")
+            return 
+
+        if len(data.shape) <= 2:
             if self.current_mode == "wiggle":
                 self._show_wiggle(data)
             else:
                 self.show_seismic(data)
-                
-        
-        elif len(data.shape) ==3:
-            if mode=="inline":
+
+        elif len(data.shape) == 3:
+            if mode == "inline":
+                index = line - self.inline_offset
                 if self.current_mode == "wiggle":
-                    self._show_wiggle(data[line])
+
+                    self._show_wiggle(data[index])
                 else:
-                    self.show_seismic(data[line])
-                   
+                    self.show_seismic(data[index])
             else:
+                index = line - self.crossline_offset
+                print(f"📎 Slice crossline: data[:,:,{line}].T.shape = {data[:,:,line].T.shape}")
                 if self.current_mode == "wiggle":
-                    self._show_wiggle(data[:,:,line].T)
+                    self._show_wiggle(data[:,:,index].T)
                 else:
-                    self.show_seismic(data[:,:,line].T)
-                  
-                
+                    self.show_seismic(data[:,:,index].T)
+        else:
+            print(f"❌ Forma de datos no soportada: {data.shape}")
+            return
 
         self.update_min_max_labels()
 
@@ -179,7 +182,8 @@ class DisplayPanel(QWidget):
                 self.file = segyio.open(str(path))
                 self.ilines = list(self.file.ilines)
                 self.xlines = list(self.file.xlines)
-
+                self.inline_offset = self.ilines[0]      # e.g. 100
+                self.crossline_offset = self.xlines[0]
                 main_window = find_main_window(self)
                 if main_window and hasattr(main_window, "sidebar"):
                     main_window.sidebar.set_ixline_limits(self.ilines[0], self.ilines[-1], self.xlines[0], self.xlines[-1])
@@ -305,17 +309,22 @@ class DisplayPanel(QWidget):
             if mode == "iline":
                 print("\n▶ Procesando modo ILINE")
                 total_slices = iline_to - iline_from + 1
+                inline_offset = self.ilines[0]  # índice real mínimo
+
                 for idx, i in enumerate(range(iline_from, iline_to + 1)):
-                    print(f"Procesando iline {i}")
+                    array_index = i - inline_offset  # convertir índice real a índice de array
+                    print(f"Procesando iline real={i} (índice interno={array_index})")
                     print(f"→ Accediendo self.file.iline[{i}][{y_start}:{y_end}, {x_start}:{x_end}]")
+
                     section = self.file.iline[i].T[y_start:y_end, x_start:x_end]
                     print(section.shape)
+
                     if section.size == 0:
                         raise ValueError("Selected iline section is empty.")
-                    section = (section - section.min()) / max(section.max(), 1e-6)
 
+                    #section = (section - section.min()) / max(section.max(), 1e-6)
                     TestData, top, bot, lf, rt = utils.padding(section)
-                    TestData = (TestData - TestData.min()) / max(TestData.max(), 1e-6)
+                    #TestData = (TestData - TestData.min()) / max(TestData.max(), 1e-6)
                     patches = utils.patchDivision(TestData)
 
                     def safe_update(value, msg=""):
@@ -328,10 +337,9 @@ class DisplayPanel(QWidget):
                         TestData.shape,
                         progress_callback=safe_update
                     )
-                    print("✅ Result type:", type(result))
-                    print("✅ Result shape:", getattr(result, "shape", "No shape"))
-                    print("✅ Result content:", result)
-                    self.dataEnhanced[i][y_start:y_end, x_start:x_end] = result[
+
+                    print("✅ Result shape:", result.shape)
+                    self.dataEnhanced[array_index][y_start:y_end, x_start:x_end] = result[
                         top:result.shape[0] - bot,
                         lf:result.shape[1] - rt
                     ]
@@ -339,16 +347,22 @@ class DisplayPanel(QWidget):
             elif mode == "xline":
                 print("\n▶ Procesando modo XLINE")
                 total_slices = xline_to - xline_from + 1
-                for idx, i in enumerate(range(xline_from, xline_to + 1)):
-                    print(f"Procesando xline {i}")
-                    print(f"→ Accediendo self.file.xline[:, {y_start}:{y_end}, {i}]")
-                    section = self.file.xline[i].T[:, y_start:y_end, i]
-                    if section.size == 0:
-                        raise ValueError("Selected Crossline section is empty.")
-                    section = (section - section.min()) / max(section.max(), 1e-6)
+                crossline_offset = self.xlines[0]  # índice real mínimo
 
-                    TestData, top, bot, lf, rt = utils.padding(section)
-                    TestData = (TestData - TestData.min()) / max(TestData.max(), 1e-6)
+                for idx, i in enumerate(range(xline_from, xline_to + 1)):
+                    array_index = i - crossline_offset  # convertir índice real a índice de array
+                    print(f"Procesando xline real={i} (índice interno={array_index})")
+                    print(f"→ Accediendo self.file.xline[{i}].T[{x_start}:{x_end}, {y_start}:{y_end}]")
+
+                    section = self.file.xline[i].T
+                    section_crop = section[y_start:y_end,x_start:x_end]
+
+                    if section_crop.size == 0:
+                        raise ValueError("Selected Crossline section is empty.")
+
+                    section_crop = (section_crop - section_crop.min()) / max(section_crop.max(), 1e-6)
+                    TestData, top, bot, lf, rt = utils.padding(section_crop)
+                    
                     patches = utils.patchDivision(TestData)
 
                     def safe_update(value, msg=""):
@@ -362,11 +376,16 @@ class DisplayPanel(QWidget):
                         progress_callback=safe_update
                     )
 
-                    self.dataEnhanced[:, y_start:y_end, i] = result[
+                    print("✅ Result shape:", result[
                         top:result.shape[0] - bot,
                         lf:result.shape[1] - rt
-                    ]
+                    ].shape)
+                    self.dataEnhanced[x_start:x_end, y_start:y_end, array_index] = result[
+                        top:result.shape[0] - bot,
+                        lf:result.shape[1] - rt
+                    ].T
             self.data = self.dataEnhanced[i]
+            
             self.show_current()
             progress_dialog.update_progress(100)
             progress_dialog.accept()
@@ -458,20 +477,48 @@ class DisplayPanel(QWidget):
         self.current_mode = mode
 
         main_window = find_main_window(self)
+        slice_mode = "inline"
+        line = None
+
         if main_window and hasattr(main_window, "sidebar"):
-            if hasattr(main_window.sidebar, "view_group"):
-                # Modo 2D
-                btn_id = main_window.sidebar.view_group.checkedId()
+            sidebar = main_window.sidebar
+
+            # ✅ Recuperar sección activa y modo
+            section, axis, line_value = sidebar.get_active_section()
+            if section and axis:
+                slice_mode = axis
+                line = line_value
+
+            print(f"🧭 Sección activa: {section} | Modo: {slice_mode} | Línea: {line}")
+
+            if hasattr(sidebar, "view_group"):
+                btn_id = sidebar.view_group.checkedId()
                 if btn_id == 2:
                     self.show_difference()
                 else:
-                    self.show_current()
+                    self.show_current(line=line, mode=slice_mode)
             else:
-                # Modo 3D: simplemente refresca la vista
-                self.show_current()
+                self.show_current(line=line, mode=slice_mode)
         else:
-            self.show_current()
+            self.show_current(line=line, mode=slice_mode)
+    
+    def update_slice(self, section, axis, line_value):
+    
+        if axis == "inline":
+            self.data = self.file.iline[line_value].T
+        else:
+            self.data = self.file.xline[line_value].T
 
+        if section == "Original":
+            self.showing_enhanced = False
+            self.show_current()
+        elif section == "Enhanced" and self.dataEnhanced is not None:
+            self.showing_enhanced = True
+            self.show_current(line_value, axis)
+        elif section == "Difference" and self.dataEnhanced is not None:
+            self.show_difference(line_value, axis)
+
+        self.update_min_max_labels()
 
 def find_main_window(widget):
     while widget:

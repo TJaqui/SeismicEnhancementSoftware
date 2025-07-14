@@ -75,10 +75,10 @@ class SideBar3D(QFrame):
         layout.setSpacing(12)
 
         self.spinboxes = {}  # Guarda spinboxes por sección
+        self.axis_buttons = []  # Guarda (botón, sección, tipo)
         self.global_button_group = QButtonGroup()
         self.global_button_group.setExclusive(True)
-
-        self.button_ids = {}  # Map for reverse lookup: button -> (section, type)
+        self.button_ids = {}
 
         button_id_counter = 0
 
@@ -88,7 +88,6 @@ class SideBar3D(QFrame):
             iline_spin = self._create_spinbox()
             xline_spin = self._create_spinbox()
 
-            # Add to global group and map
             self.global_button_group.addButton(inline_btn, button_id_counter)
             self.button_ids[inline_btn] = (section, "inline")
             button_id_counter += 1
@@ -97,11 +96,13 @@ class SideBar3D(QFrame):
             self.button_ids[crossline_btn] = (section, "crossline")
             button_id_counter += 1
 
-            # Por defecto, activar el inline original
             if section == "Original":
                 inline_btn.setChecked(True)
 
             self.spinboxes[section] = (iline_spin, xline_spin)
+
+            self.axis_buttons.append((inline_btn, section, "inline"))
+            self.axis_buttons.append((crossline_btn, section, "crossline"))
 
             section_widget = CollapsibleSection(section, [
                 inline_btn, iline_spin, crossline_btn, xline_spin
@@ -174,3 +175,10 @@ class SideBar3D(QFrame):
         for iline_spin, xline_spin in self.spinboxes.values():
             iline_spin.valueChanged.connect(callback)
             xline_spin.valueChanged.connect(callback)
+
+    def connect_axis_buttons(self, callback):
+        for button, section, axis in self.axis_buttons:
+            def handler(checked=False, s=section, a=axis):
+                spinbox = self.spinboxes[s][0] if a == "inline" else self.spinboxes[s][1]
+                callback(s, a, spinbox.value())
+            button.clicked.connect(handler)
