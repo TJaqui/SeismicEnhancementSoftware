@@ -554,25 +554,34 @@ class DisplayPanel(QWidget):
         if main_window and hasattr(main_window, "sidebar"):
             sidebar = main_window.sidebar
 
-            # ✅ Recuperar sección activa y modo
-            section, axis, line_value = sidebar.get_active_section()
-            if section and axis:
-                slice_mode = axis
-                line = line_value
-
-            print(f"🧭 Sección activa: {section} | Modo: {slice_mode} | Línea: {line}")
-
+            # 🚧 Modo 2D
             if hasattr(sidebar, "view_group"):
                 btn_id = sidebar.view_group.checkedId()
                 if btn_id == 2:
                     self.show_difference()
+                    return
                 else:
-                    self.show_current(line=line, mode=slice_mode)
-            else:
-                self.show_current(line=line, mode=slice_mode)
-        else:
-            self.show_current(line=line, mode=slice_mode)
-    
+                    self.show_current()
+                    return
+
+            # 🚀 Modo 3D
+            if hasattr(sidebar, "get_active_section"):
+                section, axis, line_value = sidebar.get_active_section()
+                if section and axis:
+                    slice_mode = axis
+                    line = line_value
+                    print(f"🧭 Sección activa: {section} | Modo: {slice_mode} | Línea: {line}")
+
+                    if section == "Difference":
+                        self.show_difference(line, slice_mode)
+                    else:
+                        self.show_current(line=line, mode=slice_mode)
+                    return
+
+        # Fallback (sin sidebar o modo desconocido)
+        self.show_current(line=line, mode=slice_mode)
+
+        
     def update_slice(self, section, axis, line_value):
     
         if axis == "inline":
