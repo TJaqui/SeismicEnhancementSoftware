@@ -48,8 +48,48 @@ class DisplayPanel(QWidget):
 
         # Mostrar la imagen sísmica
         
-        im = self.canvas.ax.imshow(data, cmap=cmap, aspect='equal', origin='upper')
+        #im = self.canvas.ax.imshow(data, cmap=cmap, aspect='equal', origin='upper')
 
+        dt_microseconds = self.file.bin[segyio.BinField.Interval]
+        dt_seconds = dt_microseconds / 1e6
+        num_samples = data.shape[0]
+        time_axis = np.arange(num_samples) * dt_seconds  # seconds
+
+        # Distance Axis
+        cdp_x = self.file.attributes(segyio.TraceField.CDP_X)[:]
+        cdp_y = self.file.attributes(segyio.TraceField.CDP_Y)[:]
+
+        # Robust check
+        if np.all(cdp_x == cdp_x[0]) and np.all(cdp_y == cdp_y[0]):
+            print("⚠️ No variation in CDP coordinates, defaulting spacing to 1.")
+            spacing = 1.0
+        else:
+            distances = np.sqrt((cdp_x - cdp_x[0])**2 + (cdp_y - cdp_y[0])**2)
+            unique_distances = np.unique(distances)
+            if len(unique_distances) > 1:
+                spacing = np.mean(np.diff(unique_distances))
+            else:
+                spacing = 1.0
+                print("⚠️ Insufficient variation in distances, using default spacing = 1.")
+
+        num_traces = data.shape[1]
+        distance_axis = np.arange(num_traces) * spacing
+
+        # Confirm valid extent (no NaNs or Inf)
+        if np.isfinite(distance_axis).all() and np.isfinite(time_axis).all():
+            extent = [distance_axis[0], distance_axis[-1], time_axis[-1], time_axis[0]]
+        else:
+            extent = [0, num_traces - 1, num_samples * dt_seconds, 0]
+            print("⚠️ Invalid axes values, fallback to default indices.")
+
+        im = self.canvas.ax.imshow(data, cmap=cmap, aspect='auto', origin='upper', extent=extent)
+
+        # Axis labels
+        filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
+        self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
+        self.canvas.ax.set_xlabel("Distance (m)", fontsize=11, color="#4D4D4D")
+        self.canvas.ax.set_ylabel("Time (s)", fontsize=11, color="#4D4D4D")
+        self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
         # Título y etiquetas
         filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
         self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
