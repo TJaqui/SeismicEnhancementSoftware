@@ -228,7 +228,8 @@ class RangeDialogAd(QDialog):
 class RangeDialog3D(QDialog):
     def __init__(self, parent=None, data=None, iline_index=0, xline_index=0):
         super().__init__(parent)
-        self.setWindowTitle("Select 2D Section")
+        self.setWindowTitle("Select a Section")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setFixedSize(460, 540)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
 
