@@ -84,32 +84,30 @@ class MainWindow(QMainWindow):
             file_path = dialog.get_file_path()
             mode = dialog.get_mode()
 
-            # Quitar el sidebar anterior del layout
-            self.centralWidget().layout().itemAt(1).layout().removeWidget(self.sidebar)
-            self.sidebar.setParent(None)
+            # ⛔️ Quitar sidebar actual del layout y destruir
+            if self.sidebar is not None:
+                self.centralWidget().layout().itemAt(1).layout().removeWidget(self.sidebar)
+                self.sidebar.setParent(None)
+                self.sidebar.deleteLater()
+                self.sidebar = None
 
-            # Crear el nuevo sidebar según el modo
+            # ✅ Crear nuevo sidebar según modo
             if mode == "3D":
-                from ui.sidebar3d import SideBar3D
                 self.sidebar = SideBar3D()
                 self.sidebar.connect_spinboxes(self.displaypanel.update_plot)
                 self.sidebar.connect_axis_buttons(self.on_axis_button_clicked)
             else:
                 self.sidebar = SideBar()
-                self.sidebar.iline_spin.valueChanged.connect(self.displaypanel.update_plot)
-                self.sidebar.xline_spin.valueChanged.connect(self.displaypanel.update_plot)
+                self.sidebar.view_group.buttonClicked[int].connect(self.toggle_view_mode)
+                self.sidebar.hide_view_buttons()
 
-            # Añadir nuevo sidebar al layout
+            # ✅ Agregar nuevo sidebar al layout
             self.centralWidget().layout().itemAt(1).insertWidget(0, self.sidebar)
 
-            # Reconectar referencias
+            # ✅ Actualizar referencia cruzada
             self.displaypanel.sidebar = self.sidebar
 
-            # Reconectar view_group si aplica
-            if hasattr(self.sidebar, "view_group"):
-                self.sidebar.view_group.buttonClicked[int].connect(self.toggle_view_mode)
-
-            # Cargar el nuevo archivo
+            # ✅ Cargar archivo con el nuevo modo
             self.mode = mode
             self.displaypanel.load_file(file_path, mode)
 
@@ -121,13 +119,6 @@ class MainWindow(QMainWindow):
             colors = ["seismic", "gray", "hot"]
             cmap = colors[id]
             self.displaypanel.show_seismic(self.displaypanel.data, cmap=cmap)
-
-    def handle_open(self):
-        dialog = SelectModeDialog(self)
-        if dialog.exec_() == dialog.Accepted:
-            file_path = dialog.get_file_path()
-            mode = dialog.get_mode()
-            self.displaypanel.load_file(file_path, mode)
 
     def toggle_view_mode(self, id):
         if id == 0 and self.displaypanel.data is not None:
