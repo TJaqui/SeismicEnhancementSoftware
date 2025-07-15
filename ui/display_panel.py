@@ -176,6 +176,12 @@ class DisplayPanel(QWidget):
             if mode == "2D":
                 global datamin, datamax
                 self.file = segyio.open(str(path), ignore_geometry=True)
+
+                self.ilines = None
+                self.xlines = None
+                self.inline_offset =None      # e.g. 100
+                self.crossline_offset = None
+
                 self.data = self.file.trace.raw[:].T
                 datamin = self.data.min()
                 datamax = self.data.max()
@@ -346,7 +352,7 @@ class DisplayPanel(QWidget):
     def enhance_data_3D(self):
         progress_dialog = None
         try:
-            dialog = RangeDialog3D(self, data=self.data)
+            dialog = RangeDialog3D(self, data=self.data.T)
             if dialog.exec_() != dialog.Accepted:
                 return
 
@@ -455,7 +461,7 @@ class DisplayPanel(QWidget):
                         top:result.shape[0] - bot,
                         lf:result.shape[1] - rt
                     ].T
-            self.data = self.dataEnhanced[i]
+            #self.data = self.dataEnhanced[i]
             
             self.show_current()
             progress_dialog.update_progress(100)
