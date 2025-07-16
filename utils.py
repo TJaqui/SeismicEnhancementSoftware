@@ -262,6 +262,7 @@ def save2dData(data, template_path, dstpath, dmin, dmax):
 
 def save3dData(data, template_path, dstpath, dmin, dmax):
     denorm_enhanced = data
+    print(denorm_enhanced.shape)
     template_file = Path(template_path)
 
     with segyio.open(str(template_file), 'r', ignore_geometry=True) as src:

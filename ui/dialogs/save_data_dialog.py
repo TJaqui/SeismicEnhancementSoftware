@@ -70,10 +70,16 @@ class SaveDataDialog(QDialog):
 
     def update_plot(self):
         self.canvas.ax.clear()
-        if self.dataEnhanced is not None:
-            self.canvas.ax.imshow(self.dataEnhanced, cmap="gray", origin="upper", aspect="equal")
-        else:
-            self.canvas.ax.imshow(self.data, cmap="gray", origin="upper", aspect="equal")
+        if self. mode =="2D":
+            if self.dataEnhanced is not None:
+                self.canvas.ax.imshow(self.dataEnhanced, cmap="gray", origin="upper", aspect="equal")
+            else:
+                self.canvas.ax.imshow(self.data, cmap="gray", origin="upper", aspect="equal")
+        elif self.mode == "3D":
+            if self.dataEnhanced is not None:
+                self.canvas.ax.imshow(self.dataEnhanced[100], cmap="gray", origin="upper", aspect="equal")
+            else:
+                self.canvas.ax.imshow(self.data[100], cmap="gray", origin="upper", aspect="equal")
         self.canvas.draw()
 
     def save_data(self):
