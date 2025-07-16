@@ -347,7 +347,14 @@ class DisplayPanel(QWidget):
     def enhance_data_3D(self):
         progress_dialog = None
         try:
-            dialog = RangeDialog3D(self, data=self.data)
+            dialog = RangeDialog3D(
+                parent=self,
+                data=self.data,
+                iline_min=self.ilines[0],
+                iline_max=self.ilines[-1],
+                xline_min=self.xlines[0],
+                xline_max=self.xlines[-1]
+            )
             if dialog.exec_() != dialog.Accepted:
                 return
 

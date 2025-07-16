@@ -226,7 +226,8 @@ class RangeDialogAd(QDialog):
                 int(self.epochs.text()), int(self.gensamples.text()))
 
 class RangeDialog3D(QDialog):
-    def __init__(self, parent=None, data=None, iline_index=0, xline_index=0):
+    def __init__(self, parent=None, data=None,
+                 iline_min=0, iline_max=0, xline_min=0, xline_max=0):
         super().__init__(parent)
         self.setWindowTitle("Select a Section")
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -236,6 +237,7 @@ class RangeDialog3D(QDialog):
         self.data = data.copy() if data is not None else None
         self.canvas = MplCanvas(self)
 
+        # Radios
         self.inline_radio = QRadioButton("Enhance Inline Section")
         self.xline_radio = QRadioButton("Enhance Crossline Section")
         self.inline_radio.setChecked(True)
@@ -250,11 +252,11 @@ class RangeDialog3D(QDialog):
         self.y_from = QLineEdit("0")
         self.y_to = QLineEdit(str(self.data.shape[0]) if self.data is not None else "500")
 
-        # Índices de referencia (de dónde vino el slice)
-        self.iline_from = QLineEdit(str(iline_index))
-        self.iline_to = QLineEdit(str(iline_index))
-        self.xline_from = QLineEdit(str(xline_index))
-        self.xline_to = QLineEdit(str(xline_index))
+        # Índices de línea iniciales (usamos los valores reales directamente)
+        self.iline_from = QLineEdit(str(iline_min))
+        self.iline_to = QLineEdit(str(iline_max))
+        self.xline_from = QLineEdit(str(xline_min))
+        self.xline_to = QLineEdit(str(xline_max))
 
         # Layout general
         layout = QVBoxLayout()
@@ -318,7 +320,7 @@ class RangeDialog3D(QDialog):
             y0 = int(self.y_from.text())
             y1 = int(self.y_to.text())
             if x1 > x0 and y1 > y0:
-                cropped = self.data[y0:y1, x0:x1]
+                cropped = self.data[y0:y1, x0:x1].T
                 self.canvas.ax.clear()
                 self.canvas.ax.imshow(cropped.T, cmap="gray", origin="upper", aspect="auto")
                 self.canvas.draw()
