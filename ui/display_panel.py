@@ -62,7 +62,7 @@ class DisplayPanel(QWidget):
         # Título y etiquetas
         filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
         self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
-
+        self.canvas.ax.set_ylabel("Seconds (s)")
         self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
         self.canvas.ax.spines['top'].set_visible(False)
         self.canvas.ax.spines['right'].set_visible(False)
@@ -95,12 +95,13 @@ class DisplayPanel(QWidget):
                 
                 
                 if mode=="inline":
-                   
-                    diff = self.data - self.dataEnhanced[line]
+
+                    index = line - self.inline_offset
+                    diff = self.file.iline[line].T - self.dataEnhanced[index]
                     self.show_seismic(diff, cmap=self.current_mode) 
                 else:
-                    
-                    diff = self.data - self.dataEnhanced[:,:,line].T
+                    index = line - self.crossline_offset
+                    diff = self.file.xline[line].T - self.dataEnhanced[:,:,index].T
 
                     self.show_seismic(diff, cmap=self.current_mode) 
 
