@@ -6,7 +6,7 @@ from models.Attention_unet import AttU_Net
 from tqdm import tqdm
 import segyio
 from pathlib import Path
-
+import os
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -217,7 +217,13 @@ def seismicEnhancement3D(data,shape,step=16, progress_callback=None):
     stpsz = (step,step)
     model = AttU_Net(img_ch=1,output_ch=1).to(device)
     model.eval()
-    model.load_state_dict(torch.load('checkpoints/att_u_fine.pt', weights_only=False,map_location=device))
+    ruta = 'checkpoints/att_u_fine_new.pt'
+
+    if os.path.exists(ruta):
+        model.load_state_dict(torch.load(ruta, weights_only=False,map_location=device))
+    else:
+        model.load_state_dict(torch.load('checkpoints/att_u_fine.pt', weights_only=False,map_location=device))
+
     data_loader = torch.utils.data.DataLoader(data, batch_size=5)
     denoised_tensor_list = []
     total = len(data_loader)
@@ -262,7 +268,7 @@ def save2dData(data, template_path, dstpath, dmin, dmax):
 
 def save3dData(data, template_path, dstpath, dmin, dmax):
     denorm_enhanced = data
-    print(denorm_enhanced.shape)
+    
     template_file = Path(template_path)
 
     with segyio.open(str(template_file), 'r', ignore_geometry=True) as src:

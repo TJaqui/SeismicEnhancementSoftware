@@ -51,9 +51,15 @@ class DisplayPanel(QWidget):
         
         #im = self.canvas.ax.imshow(data, cmap=cmap, aspect='equal', origin='upper')
 
-
+        
         im = self.canvas.ax.imshow(data, cmap=cmap, aspect='auto', origin='upper', extent=self.extent)
+        
 
+        self.canvas.fig.canvas.draw_idle()
+
+        # Print current axis limits to debug
+        print("X axis limits after plotting:", self.canvas.ax.get_xlim())
+        print("Y axis limits after plotting:", self.canvas.ax.get_ylim())
         # Axis labels
         filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
         self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
@@ -488,7 +494,7 @@ class DisplayPanel(QWidget):
     def adapt_to_data(self):
         progress_dialog = None
         try:
-            dialog = RangeDialogAd(self, data=self.data)
+            dialog = RangeDialogAd(self, data=self.dataEnhanced)
             if dialog.exec_() != dialog.Accepted:
                 return
 

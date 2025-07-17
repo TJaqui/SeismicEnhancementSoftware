@@ -159,7 +159,7 @@ def train(queue, epochs, loss_train, batch_size, i, psnr_train):
     if i==0:
         model.load_state_dict(torch.load('checkpoints/att_u_fine.pt'))
     else:
-        model.load_state_dict(torch.load('att_u_fine.pt'))
+        model.load_state_dict(torch.load('checkpoints/att_u_fine_new.pt'))
     model.train()
 
     tensor1_np, tensor2_np = queue.get()
@@ -221,7 +221,7 @@ def train(queue, epochs, loss_train, batch_size, i, psnr_train):
         #    "(for 1 minibatch) Training loss %.7f | PSNR training %.7f"
         #    % (float(loss_value), float(psnrt))
         #)
-        torch.save(model.state_dict(), "att_u_fine.pt")
+        torch.save(model.state_dict(), "checkpoints/att_u_fine_new.pt")
 
 def adaptSection(sec):
     data = sec
