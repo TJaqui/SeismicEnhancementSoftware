@@ -69,6 +69,7 @@ class DisplayPanel(QWidget):
         filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
         self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
         self.canvas.ax.set_ylabel("Seconds (s)")
+        self.canvas.ax.set_ylabel("Trace")
         self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
         self.canvas.ax.spines['top'].set_visible(False)
         self.canvas.ax.spines['right'].set_visible(False)
