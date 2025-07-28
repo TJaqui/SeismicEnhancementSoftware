@@ -103,6 +103,7 @@ class SaveDataDialog(QDialog):
             if self.mode == "2D":
                 save2dData(data_to_save, self.data_name, dst_path, dmin, dmax)
             elif self.mode == "3D":
+                print(f"Saving 3D data to {data_to_save.shape} at {dst_path}")
                 save3dData(data_to_save, self.data_name, dst_path, dmin, dmax)
 
             QMessageBox.information(self, "Success", f"Data saved successfully to:\n{dst_path}")

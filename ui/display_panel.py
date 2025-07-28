@@ -494,7 +494,33 @@ class DisplayPanel(QWidget):
     def adapt_to_data(self):
         progress_dialog = None
         try:
-            dialog = RangeDialogAd(self, data=self.dataEnhanced)
+            main_window = find_main_window(self)
+            sidebar = main_window.sidebar
+            if hasattr(sidebar, "get_active_section"):
+                section, axis, line_value = sidebar.get_active_section()
+                if section and axis:
+                    slice_mode = axis
+                    line = line_value
+                    print(f"🧭 Sección activa: {section} | Modo: {slice_mode} | Línea: {line}")
+
+                    if section == "Difference":
+                        self.show_difference(line, slice_mode)
+                    else:
+                        self.show_current(line=line, mode=slice_mode)
+            print(len(self.dataEnhanced.shape))
+            if len(self.dataEnhanced.shape)<=2:
+                print("Adaptando a datos 2D")
+                dialog = RangeDialogAd(self, data=self.dataEnhanced)
+            elif len(self.dataEnhanced.shape) == 3: 
+                print("Adaptando a datos 2D")
+
+                if  axis == "inline":
+                    index = line_value - self.inline_offset
+                    dialog = RangeDialogAd(self, data=self.dataEnhanced[index])  
+                else: 
+                    index = line_value - self.crossline_offset
+                    dialog = RangeDialogAd(self, data=self.dataEnhanced[:,:,index].T)  
+
             if dialog.exec_() != dialog.Accepted:
                 return
 

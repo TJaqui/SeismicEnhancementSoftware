@@ -5,6 +5,7 @@ from sporco import array,plot,util
 from models.Attention_unet import AttU_Net
 from tqdm import tqdm
 import segyio
+from segyio import TraceField
 from pathlib import Path
 import os
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -248,7 +249,7 @@ def seismicEnhancement3D(data,shape,step=16, progress_callback=None):
     return imgd_median
 
 def save2dData(data, template_path, dstpath, dmin, dmax):
-    denorm_enhanced = data
+    denorm_enhanced = denorm_0_1_to_range(data,dmin, dmax)
     template_file = Path(template_path)
 
     with segyio.open(str(template_file), 'r', ignore_geometry=True) as src:
@@ -266,20 +267,68 @@ def save2dData(data, template_path, dstpath, dmin, dmax):
             dst.header = src.header
             dst.trace.raw[:] = denorm_enhanced
 
+def denorm_0_1_to_range(x, orig_min, orig_max):
+    """
+    Undo a 0‑to‑1 normalization.
+
+    Parameters
+    ----------
+    x : np.ndarray | torch.Tensor
+        Data that was previously scaled to the [0, 1] interval.
+    orig_min : float or array‑like
+        The minimum value(s) in the *original* data distribution.
+        Can be a scalar or per‑channel/feature array (broadcastable to `x`).
+    orig_max : float or array‑like
+        The maximum value(s) in the *original* data distribution.
+        Must be broadcastable to `x`.
+
+    Returns
+    -------
+    denorm : same type as `x`
+        Data rescaled back to the original range.
+    """
+    if orig_max is None or orig_min is None:
+        raise ValueError("Both `orig_min` and `orig_max` must be provided.")
+    scale = (orig_max - orig_min)
+    return x * scale + orig_min
 def save3dData(data, template_path, dstpath, dmin, dmax):
-    denorm_enhanced = data
+    denorm_enhanced = denorm_0_1_to_range(data,dmin, dmax).astype(np.float32).T
     
     template_file = Path(template_path)
+    print(f"Saving 3D data to {template_file}")
+    with segyio.open(str(template_file), 'r') as src:
 
-    with segyio.open(str(template_file), 'r', ignore_geometry=True) as src:
+  
+        inlines  = np.asarray(src.ilines)
+        xlines   = np.asarray(src.xlines)
+       
+       
         spec = segyio.spec()
-        spec.format = src.format
-        spec.samples = src.samples
-        spec.tracecount = src.tracecount
+        spec.format     = src.format
+        spec.samples    = src.samples
+        spec.ilines     = inlines
+        spec.xlines     = xlines
+
 
         with segyio.create(str(dstpath), spec) as dst:
             dst.text[0] = src.text[0]
-            dst.bin = src.bin
-            dst.header = src.header
-            dst.trace.raw[:][:, :] = denorm_enhanced.T
+            dst.bin     = src.bin  # keeps sample interval, etc.
+
+           
+            for i, il in enumerate(inlines):
+                
+                #print(f"Saving inline { dst.iline[il].shape}")
+                index = il-inlines[0] 
+                
+                
+
+                dst.iline[il] = denorm_enhanced[index].T
+                    # Set trace headers for each trace in the inline
+                for j, xl in enumerate(xlines):
+                    trace_index = i * len(xlines) + j
+                    dst.header[trace_index][TraceField.INLINE_3D] = il
+                    dst.header[trace_index][TraceField.CROSSLINE_3D] = xl
+            
+
+            dst.flush()
 
