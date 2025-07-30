@@ -85,6 +85,7 @@ class SideBar3D(QFrame):
         for section in ["Original", "Enhanced", "Difference"]:
             inline_btn = self._create_menu_button("Inline")
             crossline_btn = self._create_menu_button("Crossline")
+            zslice_btn = self._create_menu_button("Z-Slice")
             iline_spin = self._create_spinbox()
             xline_spin = self._create_spinbox()
 
@@ -96,6 +97,10 @@ class SideBar3D(QFrame):
             self.button_ids[crossline_btn] = (section, "crossline")
             button_id_counter += 1
 
+            self.global_button_group.addButton(zslice_btn, button_id_counter)
+            self.button_ids[zslice_btn] = (section, "zslice")
+            button_id_counter += 1
+
             if section == "Original":
                 inline_btn.setChecked(True)
 
@@ -103,9 +108,10 @@ class SideBar3D(QFrame):
 
             self.axis_buttons.append((inline_btn, section, "inline"))
             self.axis_buttons.append((crossline_btn, section, "crossline"))
+            self.axis_buttons.append((zslice_btn, section, "zslice"))
 
             section_widget = CollapsibleSection(section, [
-                inline_btn, iline_spin, crossline_btn, xline_spin
+                inline_btn, iline_spin, crossline_btn, xline_spin, zslice_btn
             ])
             section_widget.setVisible(section == "Original")
             setattr(self, f"section_{section.lower()}", section_widget)

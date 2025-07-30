@@ -11,6 +11,7 @@ import os
 from ui.dialogs.range_dialog import RangeDialog
 from ui.dialogs.range_dialog import RangeDialogAd
 from ui.dialogs.range_dialog import RangeDialog3D
+from ui.dialogs.range_dialog import ZDialog
 from ui.dialogs.progress_dialog import ProgressDialog
 from ui.sidebar3d import SideBar3D
 from finetuning import parallelTrain
@@ -37,7 +38,7 @@ class DisplayPanel(QWidget):
         self.setLayout(layout)
         self.min_label = QLabel("Min: N/A")
         self.max_label = QLabel("Max: N/A")
-        self.extent =np.arange(0,100,1)
+        #self.extent =np.arange(0,100,1)
     def show_seismic(self, data, cmap=None):
         if cmap is None:
             cmap = self.current_mode
@@ -71,8 +72,25 @@ class DisplayPanel(QWidget):
         filename = os.path.basename(self.data_path) if hasattr(self, "data_path") else "Seismic Image"
         #filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
         self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
-        self.canvas.ax.set_ylabel("Seconds (s)")
-        self.canvas.ax.set_ylabel("Trace")
+        
+        
+        for da in data.shape:
+            print("X axis label")
+            print("extent", self.extent)
+            print("extent", da)
+            if self.extent[1] == da-1:
+                
+                self.canvas.ax.set_xlabel("Trace")
+            else:
+                self.canvas.ax.set_xlabel("Distance (m)")
+            if self.extent[2] == da:
+                self.canvas.ax.set_ylabel("Pixel")
+            else:
+                self.canvas.ax.set_ylabel("Seconds (s)")
+
+
+
+        
         self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
         self.canvas.ax.spines['top'].set_visible(False)
         self.canvas.ax.spines['right'].set_visible(False)
@@ -108,8 +126,13 @@ class DisplayPanel(QWidget):
 
                     index = line - self.inline_offset
                     diff = self.file.iline[line].T - self.dataEnhanced[index]
-                    self.show_seismic(diff, cmap=self.current_mode) 
-                else:
+                    self.show_seismic(diff, cmap=self.current_mode)
+                elif mode == "zslice":
+                    index = line - self.inline_offset
+                    diff = self.file.iline[line].T - self.dataEnhanced[index]
+                    dialog = ZDialog(self, data=self.dataEnhanced)
+                    dialog.exec_()
+                elif mode == "crossline":
                     index = line - self.crossline_offset
                     diff = self.file.xline[line].T - self.dataEnhanced[:,:,index].T
 
@@ -139,7 +162,11 @@ class DisplayPanel(QWidget):
                     self._show_wiggle(data[index])
                 else:
                     self.show_seismic(data[index])
-            else:
+            elif mode == "zslice":
+                  
+                    dialog = ZDialog(self, data=data)
+                    dialog.exec_()
+            elif mode == "crossline":
                 index = line - self.crossline_offset
                 print(f"📎 Slice crossline: data[:,:,{line}].T.shape = {data[:,:,line].T.shape}")
                 if self.current_mode == "wiggle":
@@ -162,7 +189,11 @@ class DisplayPanel(QWidget):
 
         if line_type == "inline":
             self.data = self.file.iline[line_num].T
-        else:
+        elif line_type == "zslice":
+           
+            dialog = ZDialog(self, data= self.dataEnhanced)
+            dialog.exec_()
+        elif line_type == "crossline":
             self.data = self.file.xline[line_num].T
 
         if section == "Original":
@@ -522,7 +553,7 @@ class DisplayPanel(QWidget):
                 if  axis == "inline":
                     index = line_value - self.inline_offset
                     dialog = RangeDialogAd(self, data=self.dataEnhanced[index])  
-                else: 
+                elif axis == "crossline":
                     index = line_value - self.crossline_offset
                     dialog = RangeDialogAd(self, data=self.dataEnhanced[:,:,index].T)  
 
@@ -632,8 +663,13 @@ class DisplayPanel(QWidget):
     
         if axis == "inline":
             self.data = self.file.iline[line_value].T
-        else:
+        elif axis == "crossline":
             self.data = self.file.xline[line_value].T
+        elif axis == "zslice":
+            dialog = ZDialog(self, data=self.dataEnhanced)
+            print("shapes", self.data.shape)
+            if dialog.exec_() != dialog.Accepted:
+                print("done")
 
         if section == "Original":
             self.showing_enhanced = False
