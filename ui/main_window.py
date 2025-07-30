@@ -144,7 +144,7 @@ class MainWindow(QMainWindow):
 
         data = self.displaypanel.data
         dataEnhanced = self.displaypanel.dataEnhanced
-        data_name = self.displaypanel.file._filename 
+        data_name = self.displaypanel.file._filename
         mode = self.displaypanel.mode
 
         dialog = SaveDataDialog(
