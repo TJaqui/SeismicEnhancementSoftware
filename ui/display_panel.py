@@ -129,8 +129,8 @@ class DisplayPanel(QWidget):
                     self.show_seismic(diff, cmap=self.current_mode)
                 elif mode == "zslice":
                     index = line - self.inline_offset
-                    diff = self.file.iline[line].T - self.dataEnhanced[index]
-                    dialog = ZDialog(self, data=self.dataEnhanced)
+                    diff = self.volume - self.dataEnhanced
+                    dialog = ZDialog(self, data=diff)
                     dialog.exec_()
                 elif mode == "crossline":
                     index = line - self.crossline_offset
@@ -190,15 +190,13 @@ class DisplayPanel(QWidget):
         if line_type == "inline":
             self.data = self.file.iline[line_num].T
         elif line_type == "zslice":
-           
-            dialog = ZDialog(self, data= self.dataEnhanced)
-            dialog.exec_()
+           pass
         elif line_type == "crossline":
             self.data = self.file.xline[line_num].T
 
         if section == "Original":
             self.showing_enhanced = False
-            self.show_current()
+            self.show_current(line_num, line_type)
         elif section == "Enhanced" and self.dataEnhanced is not None:
             self.showing_enhanced = True
             self.show_current(line_num,line_type)
@@ -666,11 +664,7 @@ class DisplayPanel(QWidget):
         elif axis == "crossline":
             self.data = self.file.xline[line_value].T
         elif axis == "zslice":
-            dialog = ZDialog(self, data=self.dataEnhanced)
-            print("shapes", self.data.shape)
-            if dialog.exec_() != dialog.Accepted:
-                print("done")
-
+            pass
         if section == "Original":
             self.showing_enhanced = False
             self.show_current()
