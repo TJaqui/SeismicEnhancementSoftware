@@ -5,7 +5,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from PyQt5.QtCore import Qt
 import segyio
+import traceback
 import utils
+import os
 from ui.dialogs.range_dialog import RangeDialog
 from ui.dialogs.range_dialog import RangeDialogAd
 from ui.dialogs.range_dialog import RangeDialog3D
@@ -66,7 +68,8 @@ class DisplayPanel(QWidget):
 
         self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
         # Título y etiquetas
-        filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
+        filename = os.path.basename(self.data_path) if hasattr(self, "data_path") else "Seismic Image"
+        #filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
         self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
         self.canvas.ax.set_ylabel("Seconds (s)")
         self.canvas.ax.set_ylabel("Trace")
@@ -346,7 +349,8 @@ class DisplayPanel(QWidget):
         except EnhancementCancelled:
             print("🚫 Enhancement cancelled by user.")
         except Exception as e:
-            print(f"❌ Enhancement Error: {e}")
+            print(f"❌ Enhancement Error: {type(e).__name__}: {e}")
+            traceback.print_exc()  # <--- muestra la línea exacta del error
             self._show_error("Enhancement Error", str(e))
         finally:
             if progress_dialog and progress_dialog.isVisible():

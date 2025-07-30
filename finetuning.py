@@ -3,6 +3,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 from torch.optim import Adam
 from torchvision.utils import save_image
 import numpy as np
+import os
 
 from models.Attention_unet import AttU_Net
 from degradationOperator import degradeBatch
@@ -14,6 +15,7 @@ from torch import multiprocessing
 from style_transfer import transfer, transferutils
 from models import config, utils, PGGAN
 import torch.nn.functional as F
+from paths import resource_path
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -156,10 +158,13 @@ def degradingImages(queue, section, samples):
 
 def train(queue, epochs, loss_train, batch_size, i, psnr_train):
 
+    att_u_fine_path = resource_path('checkpoints/att_u_fine.pt')
+    att_u_fine_new_path = resource_path('checkpoints/att_u_fine_new.pt')
+
     if i==0:
-        model.load_state_dict(torch.load('checkpoints/att_u_fine.pt'))
+        model.load_state_dict(torch.load(att_u_fine_path))
     else:
-        model.load_state_dict(torch.load('checkpoints/att_u_fine_new.pt'))
+        model.load_state_dict(torch.load(att_u_fine_new_path))
     model.train()
 
     tensor1_np, tensor2_np = queue.get()
@@ -221,7 +226,11 @@ def train(queue, epochs, loss_train, batch_size, i, psnr_train):
         #    "(for 1 minibatch) Training loss %.7f | PSNR training %.7f"
         #    % (float(loss_value), float(psnrt))
         #)
-        torch.save(model.state_dict(), "checkpoints/att_u_fine_new.pt")
+        output_dir = os.path.join(os.getcwd(), "checkpoints_runtime")
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, "att_u_fine_new.pt")
+
+        torch.save(model.state_dict(), output_path)
 
 def adaptSection(sec):
     data = sec

@@ -1,8 +1,9 @@
 import torch
+from paths import resource_path
 
 START_TRAIN_AT_IMG_SIZE = 128
 DATASET = 'data/class1'
-CHECKPOINT_GEN = "checkpoints/PGGAN.pth"
+CHECKPOINT_GEN = resource_path("checkpoints/PGGAN.pth")
 CHECKPOINT_CRITIC = "critic.pth"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 SAVE_MODEL = True

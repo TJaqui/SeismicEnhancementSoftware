@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QHBoxLayout, QPushButton,QSizePolicy
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtCore import Qt
+from paths import resource_path
 
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
@@ -45,9 +46,9 @@ class AboutDialog(QDialog):
         top_row_layout.setAlignment(Qt.AlignCenter)
 
         top_logos = [
-            "resources/icons/GrupoGIRG.png",
-            "resources/icons/GrupoGIGBA.png",
-            "resources/icons/hdsp.png",
+            resource_path("resources/icons/GrupoGIRG.png"),
+            resource_path("resources/icons/GrupoGIGBA.png"),
+            resource_path("resources/icons/hdsp.png"),
         ]
         maximun_size=[(50,70),(70,50),(70,50)]
         for path,maximun_size in zip(top_logos,maximun_size):
@@ -65,7 +66,7 @@ class AboutDialog(QDialog):
         contributors_layout.addLayout(top_row_layout)
 
         # === Bottom row: 1 centered logo ===
-        bottom_logo_path = "resources/icons/uis.png"
+        bottom_logo_path = resource_path("resources/icons/uis.png")
         try:
             pixmap = QPixmap(bottom_logo_path).scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             label = QLabel()

@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QSizePolicy
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
+from paths import resource_path
 
 class StartScreen(QWidget):
     def __init__(self, on_open_clicked, parent=None):
@@ -43,7 +44,7 @@ class StartScreen(QWidget):
 
         # Logo aún más grande
         logo = QLabel()
-        pixmap = QPixmap("resources/icons/logo.png")
+        pixmap = QPixmap(resource_path("resources/icons/logo.png"))
         pixmap = pixmap.scaled(400, 400, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         logo.setPixmap(pixmap)
         logo.setAlignment(Qt.AlignCenter)

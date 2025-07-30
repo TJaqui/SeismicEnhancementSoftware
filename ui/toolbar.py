@@ -6,6 +6,7 @@ from PyQt5.QtCore import QSize, Qt
 from ui.dialogs.about_dialog import AboutDialog
 from ui.dialogs.help_dialog import HelpDialog
 from ui.dialogs.save_data_dialog import SaveDataDialog
+from paths import resource_path
 
 class DropDownMenuIcon(QWidget):
     def __init__(self, icon_path, title, options, callback):
@@ -15,7 +16,7 @@ class DropDownMenuIcon(QWidget):
         self.options = options
 
         self.button = QPushButton()
-        self.button.setIcon(QIcon(icon_path))
+        self.button.setIcon(QIcon(resource_path(icon_path)))
         self.button.setIconSize(QSize(48, 48))
         self.button.setFixedSize(60, 60)
         self.button.setStyleSheet("""
@@ -47,7 +48,7 @@ class DropDownMenuIcon(QWidget):
         self.buttons = {}
         for text, icon in options:
             btn = QPushButton(text)
-            btn.setIcon(QIcon(icon))
+            btn.setIcon(QIcon(resource_path(icon)))
             btn.setIconSize(QSize(20, 20))
             btn.setStyleSheet(self._default_style())
             btn.clicked.connect(self._make_callback(text))
@@ -139,7 +140,7 @@ class TopToolBar(QWidget):
             [
                 ("Seismic", "resources/icons/seismic.png"),
                 ("Gray", "resources/icons/gray.png"),
-                ("Wiggle", "resources/icons/wiggle.png")
+                ("Viridis", "resources/icons/viridis.jpeg")
             ],
             self.handle_visualization
         )
@@ -151,7 +152,8 @@ class TopToolBar(QWidget):
         self.visualization_buttons = self.visualizationMenu.buttons
         self.visualization_buttons["Seismic"].clicked.connect(lambda: self.set_visualization_mode("seismic"))
         self.visualization_buttons["Gray"].clicked.connect(lambda: self.set_visualization_mode("gray"))
-        self.visualization_buttons["Wiggle"].clicked.connect(lambda: self.set_visualization_mode("wiggle"))
+        self.visualization_buttons["Viridis"].clicked.connect(lambda: self.set_visualization_mode("viridis"))
+        #self.visualization_buttons["Wiggle"].clicked.connect(lambda: self.set_visualization_mode("wiggle"))
 
         container = QWidget()
         container.setLayout(layout)
@@ -160,7 +162,7 @@ class TopToolBar(QWidget):
 
     def _create_button(self, icon_path, text):
         button = QPushButton()
-        button.setIcon(QIcon(icon_path))
+        button.setIcon(QIcon(resource_path(icon_path)))
         button.setIconSize(QSize(48, 48))
         button.setFixedSize(60, 60)
         button.setStyleSheet("""

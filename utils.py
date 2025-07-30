@@ -8,6 +8,7 @@ import segyio
 from segyio import TraceField
 from pathlib import Path
 import os
+from paths import resource_path
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -167,7 +168,8 @@ def seismicEnhancement(data,shape,step=16, progress_callback=None):
     stpsz = (step,step)
     model = AttU_Net(img_ch=1,output_ch=1).to(device)
     model.eval()
-    model.load_state_dict(torch.load('checkpoints/att_u_fine.pt', weights_only=False,map_location=device))
+    model_path = resource_path("checkpoints/att_u_fine.pt")
+    model.load_state_dict(torch.load(model_path, weights_only=False, map_location=device))
     data_loader = torch.utils.data.DataLoader(data, batch_size=5)
     denoised_tensor_list = []
     total = len(data_loader)
@@ -218,12 +220,13 @@ def seismicEnhancement3D(data,shape,step=16, progress_callback=None):
     stpsz = (step,step)
     model = AttU_Net(img_ch=1,output_ch=1).to(device)
     model.eval()
-    ruta = 'checkpoints/att_u_fine_new.pt'
+    ruta_nueva = os.path.join(os.getcwd(), "checkpoints_runtime", "att_u_fine_new.pt")
+    ruta_preentrenada = resource_path("checkpoints/att_u_fine.pt")
 
-    if os.path.exists(ruta):
-        model.load_state_dict(torch.load(ruta, weights_only=False,map_location=device))
+    if os.path.exists(ruta_nueva):
+        model.load_state_dict(torch.load(ruta_nueva, weights_only=False, map_location=device))
     else:
-        model.load_state_dict(torch.load('checkpoints/att_u_fine.pt', weights_only=False,map_location=device))
+        model.load_state_dict(torch.load(ruta_preentrenada, weights_only=False, map_location=device))
 
     data_loader = torch.utils.data.DataLoader(data, batch_size=5)
     denoised_tensor_list = []
