@@ -214,15 +214,13 @@ class DisplayPanel(QWidget):
             self.data_path = str(path)
 
             if mode == "2D":
-                global datamin, datamax
+             
                 self.file = segyio.open(str(path), ignore_geometry=True)
 
                 self.data = self.file.trace.raw[:].T
-                datamin = self.data.min()
-                datamax = self.data.max()
+                self.datamin = self.data.min()
+                self.datamax = self.data.max()
 
-                self.data -= self.data.min()
-                self.data /= self.data.max()
                 print(f"✅ Shape of 2D data: {self.data.shape}")
                 self.dataEnhanced = None
                 
@@ -271,6 +269,8 @@ class DisplayPanel(QWidget):
 
                 "self.data = self.file.iline[self.ilines[0]].T"
                 self.volume = np.stack([self.file.iline[i].T for i in self.ilines]) #prueba
+                self.datamin = self.volume.min()
+                self.datamax = self.volume.max()
                 self.dataEnhanced = self.volume.copy()                              #prueba
                 dt_microseconds = self.file.bin[segyio.BinField.Interval]
                 dt_seconds = dt_microseconds / 1e6
@@ -360,7 +360,9 @@ class DisplayPanel(QWidget):
                 TestData.shape,
                 progress_callback=safe_update
             )
-
+            self.dataEnhanced -= self.dataEnhanced.min()
+            self.dataEnhanced /= self.dataEnhanced.max()
+            
             self.dataEnhanced[y_start:y_end, x_start:x_end] = self.datatoEnhanced[
                 top:self.datatoEnhanced.shape[0] - bot,
                 lf:self.datatoEnhanced.shape[1] - rt
@@ -370,6 +372,7 @@ class DisplayPanel(QWidget):
             progress_dialog.update_progress(100)
             progress_dialog.accept()
 
+            self.dataEnhanced = utils.denorm_0_1_to_range(self.dataEnhanced, self.datamin, self.datamax)
             main_window = find_main_window(self)
             if main_window and hasattr(main_window, "sidebar"):
                 main_window.sidebar.show_view_buttons()
@@ -444,6 +447,8 @@ class DisplayPanel(QWidget):
 
                     #section = (section - section.min()) / max(section.max(), 1e-6)
                     TestData, top, bot, lf, rt = utils.padding(section)
+                    TestData -= TestData.min()
+                    TestData /= TestData.max()  # Evitar división por cero 
                     #TestData = (TestData - TestData.min()) / max(TestData.max(), 1e-6)
                     patches = utils.patchDivision(TestData)
 
@@ -463,6 +468,7 @@ class DisplayPanel(QWidget):
                         top:result.shape[0] - bot,
                         lf:result.shape[1] - rt
                     ]
+                    self.dataEnhanced = utils.denorm_0_1_to_range(self.dataEnhanced, self.datamin, self.datamax)
 
             elif mode == "xline":
                 print("\n▶ Procesando modo XLINE")

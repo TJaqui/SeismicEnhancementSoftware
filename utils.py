@@ -252,7 +252,7 @@ def seismicEnhancement3D(data,shape,step=16, progress_callback=None):
     return imgd_median
 
 def save2dData(data, template_path, dstpath, dmin, dmax):
-    denorm_enhanced = denorm_0_1_to_range(data,dmin, dmax)
+    denorm_enhanced=data
     template_file = Path(template_path)
 
     with segyio.open(str(template_file), 'r', ignore_geometry=True) as src:
@@ -295,7 +295,7 @@ def denorm_0_1_to_range(x, orig_min, orig_max):
     scale = (orig_max - orig_min)
     return x * scale + orig_min
 def save3dData(data, template_path, dstpath, dmin, dmax):
-    denorm_enhanced = denorm_0_1_to_range(data,dmin, dmax).astype(np.float32).T
+    denorm_enhanced = denorm_enhanced.astype(np.float32).T
     
     template_file = Path(template_path)
     print(f"Saving 3D data to {template_file}")
