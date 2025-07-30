@@ -1,1 +1,16 @@
-\__pycache__
+# PyInstaller
+build/
+dist/
+*.spec
+*.log
+*.toc
+*.pkg
+*.pyz
+*.zip
+*.txt
+*.html
+*.exe
+
+# Python cache
+__pycache__/
+*.pyc
