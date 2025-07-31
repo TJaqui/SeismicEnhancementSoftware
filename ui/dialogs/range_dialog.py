@@ -432,7 +432,7 @@ class RangeDialog3D(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Select a Section")
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setFixedSize(460, 540)
+        self.setFixedSize(500, 600)
         self.setStyleSheet("QDialog { background-color: #F9FAFB; border-radius: 12px; }")
 
         self.data = data.copy() if data is not None else None
@@ -469,10 +469,39 @@ class RangeDialog3D(QDialog):
         layout.addLayout(self._row("Inline from:", self.iline_from, "to", self.iline_to))
         layout.addWidget(self.xline_radio)
         layout.addLayout(self._row("Xline from:", self.xline_from, "to", self.xline_to))
-        layout.addSpacing(8)
         layout.addLayout(self._row("X from:", self.x_from, "to", self.x_to))
         layout.addLayout(self._row("Y from:", self.y_from, "to", self.y_to))
+        layout.addSpacing(8)
+        
+        
+        pick_btn = QPushButton("Pick in the canvas")
+        pick_btn.setStyleSheet("""
+            QPushButton {
+                padding: 10px 16px;
+                font-size: 14px;
+                font-weight: 500;
+                color: white;
+                background-color: #04BFAD;
+                border: none;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background-color: #02A494;
+            }
+        """)
+        pick_btn.setCursor(Qt.PointingHandCursor)
+        pick_btn.clicked.connect(self.open_pick_dialog)
+
+        pick_layout = QHBoxLayout()
+        pick_layout.addStretch()
+        pick_layout.addWidget(pick_btn)
+        pick_layout.addStretch()
+
+        layout.addLayout(pick_layout)  # Asegúrate de que este sea tu layout principal
+
+
         layout.addWidget(self.canvas)
+
 
         # Botones
         btn_layout = QHBoxLayout()
@@ -527,3 +556,16 @@ class RangeDialog3D(QDialog):
                 self.canvas.draw()
         except:
             pass
+    
+    def get_current_slice(self):
+        return self.canvas.ax.images[0].get_array().data.copy()
+
+    def open_pick_dialog(self):
+
+        dialog = PickInCanvasDialog(self, data=self.data.copy())  # solo necesitas pasar la imagen actual
+        if dialog.exec_() == QDialog.Accepted:
+            x1, x2, y1, y2 = dialog.get_selected_ranges()
+            self.x_from.setText(str(x1))
+            self.x_to.setText(str(x2))
+            self.y_from.setText(str(y1))
+            self.y_to.setText(str(y2))
