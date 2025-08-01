@@ -50,6 +50,7 @@ class DisplayPanel(QWidget):
                 text-align: center;
                 color: #1E1E1E;
                 font-size: 13px;
+                font-weight: bold;
                 border-radius: 6px;
             }
             QPushButton:hover {
@@ -73,6 +74,7 @@ class DisplayPanel(QWidget):
                 text-align: center;
                 color: #1E1E1E;
                 font-size: 13px;
+                font-weight: bold;
                 border-radius: 6px;
             }
             QPushButton:hover {
