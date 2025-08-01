@@ -11,7 +11,7 @@ import os
 from ui.dialogs.range_dialog import RangeDialog
 from ui.dialogs.range_dialog import RangeDialogAd
 from ui.dialogs.range_dialog import RangeDialog3D
-from ui.dialogs.range_dialog import ZDialog
+from ui.dialogs.zdialog import ZDialog
 from ui.dialogs.progress_dialog import ProgressDialog
 from ui.sidebar3d import SideBar3D
 from finetuning import parallelTrain
@@ -128,10 +128,7 @@ class DisplayPanel(QWidget):
                     diff = self.file.iline[line].T - self.dataEnhanced[index]
                     self.show_seismic(diff, cmap=self.current_mode)
                 elif mode == "zslice":
-                    index = line - self.inline_offset
-                    diff = self.volume - self.dataEnhanced
-                    dialog = ZDialog(self, data=diff)
-                    dialog.exec_()
+                    pass
                 elif mode == "crossline":
                     index = line - self.crossline_offset
                     diff = self.file.xline[line].T - self.dataEnhanced[:,:,index].T
@@ -164,8 +161,7 @@ class DisplayPanel(QWidget):
                     self.show_seismic(data[index])
             elif mode == "zslice":
                   
-                    dialog = ZDialog(self, data=data)
-                    dialog.exec_()
+                    pass
             elif mode == "crossline":
                 index = line - self.crossline_offset
                 print(f"📎 Slice crossline: data[:,:,{line}].T.shape = {data[:,:,line].T.shape}")
@@ -670,10 +666,21 @@ class DisplayPanel(QWidget):
         elif axis == "crossline":
             self.data = self.file.xline[line_value].T
         elif axis == "zslice":
-            pass
+            if section == "Original":
+                
+                dialog = ZDialog(self, data=self.volume)
+                dialog.exec_()
+            elif section == "Enhanced" and self.dataEnhanced is not None:
+                dialog = ZDialog(self, data=self.dataEnhanced)
+                dialog.exec_()
+             
+            elif section == "Difference" and self.dataEnhanced is not None:
+                dialog = ZDialog(self, data=self.volume - self.dataEnhanced)
+                dialog.exec_()
+
         if section == "Original":
             self.showing_enhanced = False
-            self.show_current()
+            self.show_current(line_value,axis)
         elif section == "Enhanced" and self.dataEnhanced is not None:
             self.showing_enhanced = True
             self.show_current(line_value, axis)
