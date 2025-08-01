@@ -15,11 +15,15 @@ class ViewControl:
 
         self._is_panning = False
         self._pan_start = None
+        self.pan_activo = True
 
         self.canvas.mpl_connect("scroll_event", self._on_scroll)
         self.canvas.mpl_connect("button_press_event", self._on_press)
         self.canvas.mpl_connect("button_release_event", self._on_release)
         self.canvas.mpl_connect("motion_notify_event", self._on_motion)
+
+    def set_pan_enabled(self, enabled: bool):
+        self.pan_activo = enabled
 
     def store_original_view(self):
         self.original_xlim = self.ax.get_xlim()
@@ -108,9 +112,10 @@ class ViewControl:
             return
 
         if event.button == 1 and event.xdata is not None and event.ydata is not None:
-            self._is_panning = True
-            self._pan_start = (event.xdata, event.ydata)
-            self.canvas.setCursor(Qt.ClosedHandCursor)
+            if self.pan_activo:  # ✅ solo permite pan si está activo
+                self._is_panning = True
+                self._pan_start = (event.xdata, event.ydata)
+                self.canvas.setCursor(Qt.ClosedHandCursor)
 
     def _on_release(self, event):
         if event.button == 1:

@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QApplication, QMainWindow, QLabel, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QApplication, QMainWindow, QLabel, QHBoxLayout, QPushButton
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
@@ -30,15 +31,85 @@ class DisplayPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
 
-        self.showing_enhanced = False 
+        self.showing_enhanced = False
         self.current_mode = "gray"
+
         self.canvas = MplCanvas(self)
         self.view_control = ViewControl(self.canvas)
+
+        # 👉 Botón de zoom área (tipo lupa)
+        self.btn_zoom_area = QPushButton("🔍 Zoom")
+        self.btn_zoom_area.setCheckable(True)
+        self.btn_zoom_area.setMinimumHeight(36)
+        self.btn_zoom_area.setMaximumWidth(90)  # Limita el ancho máximo
+        self.btn_zoom_area.setStyleSheet("""
+            QPushButton {
+                background-color: #FFFFFF;
+                border: none;
+                padding: 6px 6px;
+                text-align: center;
+                color: #1E1E1E;
+                font-size: 13px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #F0F0F0;
+            }
+            QPushButton:checked {
+                background-color: #04BFAD;
+                color: white;
+            }
+        """)
+
+        # 👉 Botón reset (casita)
+        self.btn_reset = QPushButton("🏠 Reset")
+        self.btn_reset.setMinimumHeight(36)
+        self.btn_reset.setMaximumWidth(90)  # Limita el ancho máximo
+        self.btn_reset.setStyleSheet("""
+            QPushButton {
+                background-color: #FFFFFF;
+                border: none;
+                padding: 6px 6px;
+                text-align: center;
+                color: #1E1E1E;
+                font-size: 13px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #F0F0F0;
+            }
+        """)
+
+        # 🧭 Toolbar interna de Matplotlib para usar zoom tipo lupa
+        self.nav_toolbar = NavigationToolbar(self.canvas, self)
+        self.nav_toolbar.setVisible(False)  # oculta visualmente, pero podemos usar sus métodos
+
+        # 📦 Layout de botones debajo del canvas
+        btn_layout = QHBoxLayout()
+        btn_layout.setContentsMargins(12, 0, 12, 6)
+        btn_layout.setSpacing(10)
+        btn_layout.addWidget(self.btn_zoom_area)
+        btn_layout.addWidget(self.btn_reset)
+
         layout.addWidget(self.canvas)
+        layout.addLayout(btn_layout)
         self.setLayout(layout)
+
         self.min_label = QLabel("Min: N/A")
         self.max_label = QLabel("Max: N/A")
-        #self.extent =np.arange(0,100,1)
+
+        # Conectar acciones
+        self.btn_zoom_area.clicked.connect(self.toggle_zoom_area)
+        self.btn_reset.clicked.connect(lambda: self.view_control.reset_view())
+
+    def toggle_zoom_area(self):
+        if self.btn_zoom_area.isChecked():
+            self.view_control.set_pan_enabled(False)   # 🔒 Desactiva pan
+            self.nav_toolbar.zoom()
+        else:
+            self.view_control.set_pan_enabled(True)    # 🔓 Reactiva pan
+            self.nav_toolbar.zoom()
+
     def show_seismic(self, data, cmap=None):
         if cmap is None:
             cmap = self.current_mode
