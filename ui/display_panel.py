@@ -181,6 +181,7 @@ class DisplayPanel(QWidget):
 
         # Dibujar
         self.canvas.draw()
+
     def show_seismicd(self, data, cmap=None):
         if cmap is None:
             cmap = self.current_mode
@@ -196,7 +197,7 @@ class DisplayPanel(QWidget):
         
         #im = self.canvas.ax.imshow(data, cmap=cmap, aspect='equal', origin='upper')
 
-        im = self.canvas.ax.imshow(data, cmap=cmap, aspect='auto', origin='upper', extent=self.extent, vmin=-abs(data).min(), vmax=abs(data).max())
+        im = self.canvas.ax.imshow(data, cmap=cmap, aspect='auto', origin='upper', extent=self.extent, vmin=-1*abs(self.datamax), vmax=abs(self.datamax))
 
         self.canvas.fig.canvas.draw_idle()
 
@@ -257,7 +258,7 @@ class DisplayPanel(QWidget):
             if len(self.data.shape) <=2 and len(self.dataEnhanced.shape)<=2:
                 print("its in")
                 diff = self.data - self.dataEnhanced
-                self.show_seismic(diff, cmap=self.current_mode) 
+                self.show_seismicd(diff, cmap=self.current_mode) 
             elif  len(self.dataEnhanced.shape) ==3:
                 
                 
@@ -265,7 +266,7 @@ class DisplayPanel(QWidget):
 
                     index = line - self.inline_offset
                     diff = self.file.iline[line].T - self.dataEnhanced[index]
-                    self.show_seismic(diff, cmap=self.current_mode)
+                    self.show_seismicd(diff, cmap=self.current_mode)
                 elif mode == "zslice":
                     pass
                 elif mode == "crossline":
