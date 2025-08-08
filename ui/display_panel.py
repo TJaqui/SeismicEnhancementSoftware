@@ -182,6 +182,73 @@ class DisplayPanel(QWidget):
         # Dibujar
         self.canvas.draw()
 
+    def show_seismicd(self, data, cmap=None):
+        if cmap is None:
+            cmap = self.current_mode
+
+        self.canvas.ax.clear()
+
+        # Eliminar cualquier eje adicional excepto el principal
+        for ax in self.canvas.fig.axes[:]:
+            if ax != self.canvas.ax:
+                self.canvas.fig.delaxes(ax)
+
+        # Mostrar la imagen sísmica
+        
+        #im = self.canvas.ax.imshow(data, cmap=cmap, aspect='equal', origin='upper')
+
+        im = self.canvas.ax.imshow(data, cmap=cmap, aspect='auto', origin='upper', extent=self.extent, vmin=-1*abs(self.datamax), vmax=abs(self.datamax))
+
+        self.canvas.fig.canvas.draw_idle()
+
+        # Print current axis limits to debug
+        print("X axis limits after plotting:", self.canvas.ax.get_xlim())
+        print("Y axis limits after plotting:", self.canvas.ax.get_ylim())
+        # Axis labels
+        filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
+        self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
+
+        self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
+        # Título y etiquetas
+        filename = os.path.basename(self.data_path) if hasattr(self, "data_path") else "Seismic Image"
+        #filename = self.data_path.split("/")[-1] if hasattr(self, "data_path") else "Seismic Image"
+        self.canvas.ax.set_title(filename, fontsize=14, fontweight='bold', color="#1E1E1E", pad=10)
+        
+        
+        for da in data.shape:
+            print("X axis label")
+            print("extent", self.extent)
+            print("extent", da)
+            if self.extent[1] == da-1:
+                
+                self.canvas.ax.set_xlabel("Trace")
+            else:
+                self.canvas.ax.set_xlabel("Distance (m)")
+            if self.extent[2] == da:
+                self.canvas.ax.set_ylabel("Pixel")
+            else:
+                self.canvas.ax.set_ylabel("Seconds (s)")
+
+
+
+        
+        self.canvas.ax.tick_params(axis='both', colors='#4D4D4D', labelsize=9)
+        self.canvas.ax.spines['top'].set_visible(False)
+        self.canvas.ax.spines['right'].set_visible(False)
+
+        # Añadir colorbar sin afectar layout global
+        divider = make_axes_locatable(self.canvas.ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cbar = self.canvas.fig.colorbar(im, cax=cax)
+        cbar.set_label("Amplitude", fontsize=9, color="#4D4D4D")
+        cbar.ax.tick_params(labelsize=8, color="#4D4D4D")
+
+        # Restaurar vista
+        self.view_control.store_original_view()
+        self.view_control.restore_view()
+
+        # Dibujar
+        self.canvas.draw()
     def show_difference(self,  line=None,mode=None):
         if self.data is not None and self.dataEnhanced is not None:
           
@@ -191,7 +258,7 @@ class DisplayPanel(QWidget):
             if len(self.data.shape) <=2 and len(self.dataEnhanced.shape)<=2:
                 print("its in")
                 diff = self.data - self.dataEnhanced
-                self.show_seismic(diff, cmap=self.current_mode) 
+                self.show_seismicd(diff, cmap=self.current_mode) 
             elif  len(self.dataEnhanced.shape) ==3:
                 
                 
@@ -199,14 +266,15 @@ class DisplayPanel(QWidget):
 
                     index = line - self.inline_offset
                     diff = self.file.iline[line].T - self.dataEnhanced[index]
-                    self.show_seismic(diff, cmap=self.current_mode)
+                    self.show_seismicd(diff, cmap=self.current_mode)
                 elif mode == "zslice":
                     pass
                 elif mode == "crossline":
                     index = line - self.crossline_offset
                     diff = self.file.xline[line].T - self.dataEnhanced[:,:,index].T
 
-                    self.show_seismic(diff, cmap=self.current_mode) 
+
+                    self.show_seismicd(diff, cmap=self.current_mode)
 
 
     def show_current(self, line=None, mode=None):
