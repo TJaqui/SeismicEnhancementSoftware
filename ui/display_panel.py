@@ -291,7 +291,7 @@ class DisplayPanel(QWidget):
                 self.datamax = self.data.max()
 
                 print(f"✅ Shape of 2D data: {self.data.shape}")
-                self.dataEnhanced = None
+                self.dataEnhanced = self.data
                 
                 dt_microseconds = self.file.bin[segyio.BinField.Interval]
                 dt_seconds = dt_microseconds / 1e6
